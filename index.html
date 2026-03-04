@@ -17,7 +17,7 @@ position:absolute;
 top:20px;
 left:20px;
 background:rgba(0,0,0,0.6);
-padding:10px;
+padding:12px;
 border-radius:8px;
 color:white;
 }
@@ -56,7 +56,7 @@ scene.background = new THREE.Color(0x202020);
 
 const camera = new THREE.PerspectiveCamera(
 75,
-window.innerWidth / window.innerHeight,
+window.innerWidth/window.innerHeight,
 0.1,
 1000
 );
@@ -80,14 +80,32 @@ const light = new THREE.DirectionalLight(0xffffff,1);
 light.position.set(10,20,10);
 scene.add(light);
 
-const ambient = new THREE.AmbientLight(0xffffff,0.5);
-scene.add(ambient);
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// --------------------
+// CÁMARA ORBITAL
+// --------------------
+
+let angle = 0;
+
+window.addEventListener("mousemove",function(e){
+
+angle = (e.clientX / window.innerWidth) * Math.PI * 2;
+
+camera.position.x = Math.cos(angle) * 25;
+camera.position.z = Math.sin(angle) * 25;
+
+camera.lookAt(0,0,0);
+
+});
 
 // --------------------
 // TABLERO SERPENTEADO
 // --------------------
 
 const tiles=[];
+const tileTypes=[];
+
 const tileSize=2;
 const width=6;
 const height=6;
@@ -98,19 +116,27 @@ for(let z=0;z<height;z++){
 
 for(let x=0;x<width;x++){
 
-let realX = direction === 1 ? x : (width-1-x);
+let realX = direction===1 ? x : (width-1-x);
 
 const geo = new THREE.BoxGeometry(tileSize,0.5,tileSize);
+
 const mat = new THREE.MeshStandardMaterial({color:0x555555});
 
 const tile = new THREE.Mesh(geo,mat);
 
-tile.position.x = (realX - width/2) * (tileSize+0.3);
-tile.position.z = (z - height/2) * (tileSize+0.3);
+tile.position.x = (realX-width/2)(tileSize+0.3);
+tile.position.z = (z-height/2)(tileSize+0.3);
 
 scene.add(tile);
 
 tiles.push(tile);
+
+// tipo de casilla
+let r=Math.random();
+
+if(r<0.33) tileTypes.push("expense");
+else if(r<0.66) tileTypes.push("income");
+else tileTypes.push("investment");
 
 }
 
@@ -137,8 +163,8 @@ return player;
 
 }
 
-const player1 = createPlayer(0x00ff00);
-const player2 = createPlayer(0xff4444);
+const player1=createPlayer(0x00ff00);
+const player2=createPlayer(0xff4444);
 
 let positions=[0,0];
 
@@ -155,9 +181,9 @@ let passive=[0,0];
 // DADO
 // --------------------
 
-const diceGeo = new THREE.BoxGeometry(1,1,1);
-const diceMat = new THREE.MeshStandardMaterial({color:0xffffff});
-const dice = new THREE.Mesh(diceGeo,diceMat);
+const diceGeo=new THREE.BoxGeometry(1,1,1);
+const diceMat=new THREE.MeshStandardMaterial({color:0xffffff});
+const dice=new THREE.Mesh(diceGeo,diceMat);
 
 dice.position.set(0,3,0);
 
@@ -179,18 +205,18 @@ let frames=0;
 
 function spin(){
 
-dice.rotation.x += 0.2;
-dice.rotation.y += 0.2;
+dice.rotation.x+=0.2;
+dice.rotation.y+=0.2;
 
 frames++;
 
-if(frames<30){
+if(frames<40){
 
 requestAnimationFrame(spin);
 
 }else{
 
-const result = Math.floor(Math.random()*6)+1;
+const result=Math.floor(Math.random()*6)+1;
 
 movePlayer(result);
 
@@ -208,34 +234,35 @@ spin();
 
 function movePlayer(steps){
 
-const player = currentPlayer===0 ? player1 : player2;
+const player=currentPlayer===0?player1:player2;
 
-let target = positions[currentPlayer] + steps;
+let target=positions[currentPlayer]+steps;
 
-if(target >= tiles.length) target = tiles.length-1;
+if(target>=tiles.length) target=tiles.length-1;
 
-positions[currentPlayer] = target;
+positions[currentPlayer]=target;
 
-const tile = tiles[target];
+const tile=tiles[target];
 
+// marcar casilla visitada
 tile.material.color.set(
-currentPlayer===0 ? 0x00aa00 : 0xaa0000
+currentPlayer===0?0x00aa00:0xaa0000
 );
 
-const startX = player.position.x;
-const startZ = player.position.z;
+const startX=player.position.x;
+const startZ=player.position.z;
 
-const endX = tile.position.x;
-const endZ = tile.position.z;
+const endX=tile.position.x;
+const endZ=tile.position.z;
 
 let p=0;
 
 function anim(){
 
-p += 0.04;
+p+=0.04;
 
-player.position.x = startX + (endX-startX)*p;
-player.position.z = startZ + (endZ-startZ)*p;
+player.position.x=startX+(endX-startX)*p;
+player.position.z=startZ+(endZ-startZ)*p;
 
 if(p<1){
 
@@ -243,7 +270,7 @@ requestAnimationFrame(anim);
 
 }else{
 
-resolveTurn();
+resolveTile(target);
 
 }
 
@@ -254,35 +281,37 @@ anim();
 }
 
 // --------------------
-// EVENTOS
+// EVENTOS DE CASILLA
 // --------------------
 
-function triggerEvent(player){
+function resolveTile(tileIndex){
 
-let r=Math.random();
+const type=tileTypes[tileIndex];
 
-if(r<0.25){
+if(type==="expense"){
 
-money[player]-=500;
-
-}
-
-else if(r<0.5){
-
-money[player]+=800;
+money[currentPlayer]-=500;
 
 }
 
-else if(r<0.75){
+if(type==="income"){
 
-passive[player]+=100;
+money[currentPlayer]+=800;
 
 }
+
+if(type==="investment"){
+
+passive[currentPlayer]+=100;
+
+}
+
+resolveTurn();
 
 }
 
 // --------------------
-// RESOLVER TURNO
+// FIN TURNO
 // --------------------
 
 function resolveTurn(){
@@ -290,8 +319,6 @@ function resolveTurn(){
 money[currentPlayer]+=salary[currentPlayer];
 money[currentPlayer]+=passive[currentPlayer];
 money[currentPlayer]-=expenses[currentPlayer];
-
-triggerEvent(currentPlayer);
 
 updateUI();
 
@@ -317,16 +344,12 @@ rollDice();
 
 function switchTurn(){
 
-currentPlayer = currentPlayer===0 ? 1 : 0;
+currentPlayer=currentPlayer===0?1:0;
 
-document.getElementById("turn").innerText =
-currentPlayer===0 ? "Jugador 1" : "Jugador 2";
+document.getElementById("turn").innerText=
+currentPlayer===0?"Jugador 1":"Jugador 2";
 
-if(currentPlayer===1){
-
-aiTurn();
-
-}
+if(currentPlayer===1) aiTurn();
 
 }
 
@@ -336,8 +359,8 @@ aiTurn();
 
 function updateUI(){
 
-document.getElementById("money1").innerText = money[0];
-document.getElementById("money2").innerText = money[1];
+document.getElementById("money1").innerText=money[0];
+document.getElementById("money2").innerText=money[1];
 
 }
 
