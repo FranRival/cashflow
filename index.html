@@ -43,16 +43,16 @@ font-size:16px;
 
 <script>
 
-// --------------------
+// ----------------
 // ESCENA
-// --------------------
+// ----------------
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x202020);
 
-// --------------------
+// ----------------
 // CÁMARA
-// --------------------
+// ----------------
 
 const camera = new THREE.PerspectiveCamera(
 75,
@@ -61,20 +61,25 @@ window.innerWidth/window.innerHeight,
 1000
 );
 
-camera.position.set(0,20,20);
+let cameraAngle = 0;
+let cameraRadius = 25;
+let cameraHeight = 18;
+
+// posición inicial segura
+camera.position.set(0,cameraHeight,cameraRadius);
 camera.lookAt(0,0,0);
 
-// --------------------
+// ----------------
 // RENDERER
-// --------------------
+// ----------------
 
 const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(window.innerWidth,window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// --------------------
+// ----------------
 // LUCES
-// --------------------
+// ----------------
 
 const light = new THREE.DirectionalLight(0xffffff,1);
 light.position.set(10,20,10);
@@ -82,26 +87,26 @@ scene.add(light);
 
 scene.add(new THREE.AmbientLight(0xffffff,0.5));
 
-// --------------------
-// CÁMARA ORBITAL
-// --------------------
+// ----------------
+// ROTACIÓN DE CÁMARA
+// (controlada por mouse)
+// ----------------
 
-let angle = 0;
+window.addEventListener("mousemove",(e)=>{
 
-window.addEventListener("mousemove",function(e){
+cameraAngle = (e.clientX / window.innerWidth) * Math.PI * 2;
 
-angle = (e.clientX / window.innerWidth) * Math.PI * 2;
-
-camera.position.x = Math.cos(angle) * 25;
-camera.position.z = Math.sin(angle) * 25;
+camera.position.x = Math.cos(cameraAngle) * cameraRadius;
+camera.position.z = Math.sin(cameraAngle) * cameraRadius;
+camera.position.y = cameraHeight;
 
 camera.lookAt(0,0,0);
 
 });
 
-// --------------------
+// ----------------
 // TABLERO SERPENTEADO
-// --------------------
+// ----------------
 
 const tiles=[];
 const tileTypes=[];
@@ -119,7 +124,6 @@ for(let x=0;x<width;x++){
 let realX = direction===1 ? x : (width-1-x);
 
 const geo = new THREE.BoxGeometry(tileSize,0.5,tileSize);
-
 const mat = new THREE.MeshStandardMaterial({color:0x555555});
 
 const tile = new THREE.Mesh(geo,mat);
@@ -140,22 +144,22 @@ else tileTypes.push("investment");
 
 }
 
-direction *= -1;
+direction*=-1;
 
 }
 
-// --------------------
+// ----------------
 // JUGADORES
-// --------------------
+// ----------------
 
 function createPlayer(color){
 
-const geo = new THREE.SphereGeometry(0.7,32,32);
-const mat = new THREE.MeshStandardMaterial({color});
+const geo=new THREE.SphereGeometry(0.7,32,32);
+const mat=new THREE.MeshStandardMaterial({color});
 
-const player = new THREE.Mesh(geo,mat);
+const player=new THREE.Mesh(geo,mat);
 
-player.position.y = 1;
+player.position.y=1;
 
 scene.add(player);
 
@@ -168,18 +172,18 @@ const player2=createPlayer(0xff4444);
 
 let positions=[0,0];
 
-// --------------------
+// ----------------
 // SISTEMA FINANCIERO
-// --------------------
+// ----------------
 
 let money=[5000,5000];
 let salary=[1000,1000];
 let expenses=[800,800];
 let passive=[0,0];
 
-// --------------------
+// ----------------
 // DADO
-// --------------------
+// ----------------
 
 const diceGeo=new THREE.BoxGeometry(1,1,1);
 const diceMat=new THREE.MeshStandardMaterial({color:0xffffff});
@@ -189,15 +193,15 @@ dice.position.set(0,3,0);
 
 scene.add(dice);
 
-// --------------------
+// ----------------
 // TURNOS
-// --------------------
+// ----------------
 
 let currentPlayer=0;
 
-// --------------------
+// ----------------
 // LANZAR DADO
-// --------------------
+// ----------------
 
 function rollDice(){
 
@@ -228,9 +232,9 @@ spin();
 
 }
 
-// --------------------
+// ----------------
 // MOVIMIENTO
-// --------------------
+// ----------------
 
 function movePlayer(steps){
 
@@ -244,7 +248,6 @@ positions[currentPlayer]=target;
 
 const tile=tiles[target];
 
-// marcar casilla visitada
 tile.material.color.set(
 currentPlayer===0?0x00aa00:0xaa0000
 );
@@ -280,9 +283,9 @@ anim();
 
 }
 
-// --------------------
-// EVENTOS DE CASILLA
-// --------------------
+// ----------------
+// EVENTOS CASILLA
+// ----------------
 
 function resolveTile(tileIndex){
 
@@ -310,9 +313,9 @@ resolveTurn();
 
 }
 
-// --------------------
+// ----------------
 // FIN TURNO
-// --------------------
+// ----------------
 
 function resolveTurn(){
 
@@ -326,9 +329,9 @@ switchTurn();
 
 }
 
-// --------------------
-// IA BÁSICA
-// --------------------
+// ----------------
+// IA
+// ----------------
 
 function aiTurn(){
 
@@ -338,9 +341,9 @@ rollDice();
 
 }
 
-// --------------------
+// ----------------
 // CAMBIO TURNO
-// --------------------
+// ----------------
 
 function switchTurn(){
 
@@ -353,9 +356,9 @@ if(currentPlayer===1) aiTurn();
 
 }
 
-// --------------------
+// ----------------
 // UI
-// --------------------
+// ----------------
 
 function updateUI(){
 
@@ -364,9 +367,9 @@ document.getElementById("money2").innerText=money[1];
 
 }
 
-// --------------------
+// ----------------
 // LOOP
-// --------------------
+// ----------------
 
 function animate(){
 
