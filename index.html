@@ -71,10 +71,10 @@ scene.add(new THREE.AmbientLight(0xffffff,0.4));
 let angle=0;
 
 window.addEventListener("mousemove",(e)=>{
-angle=(e.clientX/window.innerWidth)Math.PI2;
-camera.position.x=Math.cos(angle)25;
-camera.position.z=Math.sin(angle)25;
-camera.lookAt(0,0,0);
+  angle=(e.clientX/window.innerWidth) * Math.PI2;
+  camera.position.x=Math.cos(angle) * 25;
+  camera.position.z=Math.sin(angle) * 25;
+  camera.lookAt(0,0,0);
 });
 
 // --------------------
@@ -343,6 +343,12 @@ requestAnimationFrame(animate);
 renderer.render(scene,camera);
 
 }
+
+function animate(){
+    requestAnimationFrame(animate);
+    renderer.render(scene,camera);
+}
+
 
 animate();
 
