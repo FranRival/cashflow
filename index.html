@@ -1,112 +1,153 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Carrera de la Rata</title>
+  <title>Cashflow MVP 3D</title>
   <style>
-    body { font-family: Arial; background:#111; color:#fff; text-align:center; }
-    button { margin:5px; padding:10px 20px; font-size:16px; }
-    .box { background:#222; padding:15px; margin:15px auto; width:400px; border-radius:10px; }
-    .win { color: #00ff88; font-size:20px; }
-    .lose { color: #ff4444; font-size:20px; }
+    body { margin:0; overflow:hidden; background:#111; }
+    #ui {
+      position:absolute;
+      top:20px;
+      left:20px;
+      color:white;
+      font-family:Arial;
+    }
+    button {
+      padding:10px;
+      margin-top:10px;
+      font-size:16px;
+    }
   </style>
 </head>
 <body>
 
-<h1>🐀 Carrera de la Rata</h1>
-
-<div class="box">
-  <p><strong>Dinero:</strong> $<span id="money"></span></p>
-  <p><strong>Salario:</strong> $<span id="salary"></span></p>
-  <p><strong>Ingreso Pasivo:</strong> $<span id="passive"></span></p>
-  <p><strong>Gastos:</strong> $<span id="expenses"></span></p>
+<div id="ui">
+  <div>Turno: <span id="turn">Jugador 1</span></div>
+  <button onclick="rollDice()">Lanzar Dado</button>
 </div>
 
-<div>
-  <button onclick="work()">Trabajar</button>
-  <button onclick="buyAsset()">Comprar Activo ($2000)</button>
-  <button onclick="nextTurn()">Siguiente Mes</button>
-</div>
-
-<p id="message"></p>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
 <script>
-let money = 3000;
-let salary = 1000;
-let passiveIncome = 0;
-let expenses = 800;
-let month = 1;
 
-function updateUI() {
-  document.getElementById("money").textContent = money;
-  document.getElementById("salary").textContent = salary;
-  document.getElementById("passive").textContent = passiveIncome;
-  document.getElementById("expenses").textContent = expenses;
+// ============================
+// ESCENA BÁSICA
+// ============================
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x202020);
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.set(0, 15, 20);
+camera.lookAt(0,0,0);
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Luz
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(10,20,10);
+scene.add(light);
+
+// ============================
+// TABLERO (CUADROS)
+// ============================
+
+const tiles = [];
+const tileSize = 2;
+const totalTiles = 20;
+
+for (let i = 0; i < totalTiles; i++) {
+  const geometry = new THREE.BoxGeometry(tileSize, 0.5, tileSize);
+  const material = new THREE.MeshStandardMaterial({color:0x555555});
+  const tile = new THREE.Mesh(geometry, material);
+
+  tile.position.x = (i - totalTiles/2) * (tileSize + 0.2);
+  tile.position.y = 0;
+
+  scene.add(tile);
+  tiles.push(tile);
 }
 
-function work() {
-  money += salary;
-  document.getElementById("message").textContent = "Trabajaste y ganaste $" + salary;
-  updateUI();
+// ============================
+// JUGADORES (ESFERAS)
+// ============================
+
+function createPlayer(color) {
+  const geometry = new THREE.SphereGeometry(0.7, 32, 32);
+  const material = new THREE.MeshStandardMaterial({color});
+  const sphere = new THREE.Mesh(geometry, material);
+  sphere.position.y = 1;
+  scene.add(sphere);
+  return sphere;
 }
 
-function buyAsset() {
-  if (money >= 2000) {
-    money -= 2000;
-    passiveIncome += 250;
-    document.getElementById("message").textContent = "Compraste un activo. +$250 ingreso pasivo mensual.";
-  } else {
-    document.getElementById("message").textContent = "No tienes suficiente dinero.";
-  }
-  updateUI();
+const player1 = createPlayer(0x00ff00);
+const player2 = createPlayer(0xff0000);
+
+let positions = [0, 0];
+let currentPlayer = 0;
+
+// ============================
+// DADO + MOVIMIENTO
+// ============================
+
+function rollDice() {
+  const dice = Math.floor(Math.random() * 6) + 1;
+  movePlayer(dice);
 }
 
-function randomEvent() {
-  let event = Math.random();
-  
-  if (event < 0.3) {
-    money -= 500;
-    return "Evento: Reparación inesperada -$500";
+function movePlayer(steps) {
+
+  const player = currentPlayer === 0 ? player1 : player2;
+
+  let target = positions[currentPlayer] + steps;
+  if (target >= totalTiles) target = totalTiles - 1;
+
+  positions[currentPlayer] = target;
+
+  const tile = tiles[target];
+
+  // Cambiar color del cuadro
+  tile.material.color.set(currentPlayer === 0 ? 0x00aa00 : 0xaa0000);
+
+  // Animación simple
+  const startX = player.position.x;
+  const endX = tile.position.x;
+
+  let progress = 0;
+
+  function animateMove() {
+    progress += 0.02;
+    player.position.x = startX + (endX - startX) * progress;
+
+    if (progress < 1) {
+      requestAnimationFrame(animateMove);
+    } else {
+      switchTurn();
+    }
   }
-  else if (event < 0.6) {
-    money += 700;
-    return "Evento: Bono extra +$700";
-  }
-  else {
-    return "Mes tranquilo sin eventos.";
-  }
+
+  animateMove();
 }
 
-function nextTurn() {
-  month++;
-
-  // ingreso mensual
-  money += passiveIncome;
-  money -= expenses;
-
-  let eventMessage = randomEvent();
-
-  if (money <= 0) {
-    document.getElementById("message").innerHTML = "<span class='lose'>💀 Te quedaste sin dinero. Game Over.</span>";
-    disableButtons();
-    return;
-  }
-
-  if (passiveIncome >= expenses) {
-    document.getElementById("message").innerHTML = "<span class='win'>🎉 ¡Saliste de la carrera de la rata!</span>";
-    disableButtons();
-    return;
-  }
-
-  document.getElementById("message").textContent = "Mes " + month + ". " + eventMessage;
-  updateUI();
+function switchTurn() {
+  currentPlayer = currentPlayer === 0 ? 1 : 0;
+  document.getElementById("turn").innerText =
+    currentPlayer === 0 ? "Jugador 1" : "Jugador 2";
 }
 
-function disableButtons() {
-  let buttons = document.querySelectorAll("button");
-  buttons.forEach(btn => btn.disabled = true);
+// ============================
+// LOOP
+// ============================
+
+function animate() {
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
 }
 
-updateUI();
+animate();
+
 </script>
 
 </body>
