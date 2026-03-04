@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Carrera de la Rata</title>
+  <style>
+    body { font-family: Arial; background:#111; color:#fff; text-align:center; }
+    button { margin:5px; padding:10px 20px; font-size:16px; }
+    .box { background:#222; padding:15px; margin:15px auto; width:400px; border-radius:10px; }
+    .win { color: #00ff88; font-size:20px; }
+    .lose { color: #ff4444; font-size:20px; }
+  </style>
+</head>
+<body>
+
+<h1>🐀 Carrera de la Rata</h1>
+
+<div class="box">
+  <p><strong>Dinero:</strong> $<span id="money"></span></p>
+  <p><strong>Salario:</strong> $<span id="salary"></span></p>
+  <p><strong>Ingreso Pasivo:</strong> $<span id="passive"></span></p>
+  <p><strong>Gastos:</strong> $<span id="expenses"></span></p>
+</div>
+
+<div>
+  <button onclick="work()">Trabajar</button>
+  <button onclick="buyAsset()">Comprar Activo ($2000)</button>
+  <button onclick="nextTurn()">Siguiente Mes</button>
+</div>
+
+<p id="message"></p>
+
+<script>
+let money = 3000;
+let salary = 1000;
+let passiveIncome = 0;
+let expenses = 800;
+let month = 1;
+
+function updateUI() {
+  document.getElementById("money").textContent = money;
+  document.getElementById("salary").textContent = salary;
+  document.getElementById("passive").textContent = passiveIncome;
+  document.getElementById("expenses").textContent = expenses;
+}
+
+function work() {
+  money += salary;
+  document.getElementById("message").textContent = "Trabajaste y ganaste $" + salary;
+  updateUI();
+}
+
+function buyAsset() {
+  if (money >= 2000) {
+    money -= 2000;
+    passiveIncome += 250;
+    document.getElementById("message").textContent = "Compraste un activo. +$250 ingreso pasivo mensual.";
+  } else {
+    document.getElementById("message").textContent = "No tienes suficiente dinero.";
+  }
+  updateUI();
+}
+
+function randomEvent() {
+  let event = Math.random();
+  
+  if (event < 0.3) {
+    money -= 500;
+    return "Evento: Reparación inesperada -$500";
+  }
+  else if (event < 0.6) {
+    money += 700;
+    return "Evento: Bono extra +$700";
+  }
+  else {
+    return "Mes tranquilo sin eventos.";
+  }
+}
+
+function nextTurn() {
+  month++;
+
+  // ingreso mensual
+  money += passiveIncome;
+  money -= expenses;
+
+  let eventMessage = randomEvent();
+
+  if (money <= 0) {
+    document.getElementById("message").innerHTML = "<span class='lose'>💀 Te quedaste sin dinero. Game Over.</span>";
+    disableButtons();
+    return;
+  }
+
+  if (passiveIncome >= expenses) {
+    document.getElementById("message").innerHTML = "<span class='win'>🎉 ¡Saliste de la carrera de la rata!</span>";
+    disableButtons();
+    return;
+  }
+
+  document.getElementById("message").textContent = "Mes " + month + ". " + eventMessage;
+  updateUI();
+}
+
+function disableButtons() {
+  let buttons = document.querySelectorAll("button");
+  buttons.forEach(btn => btn.disabled = true);
+}
+
+updateUI();
+</script>
+
+</body>
+</html>
