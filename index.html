@@ -422,6 +422,7 @@ requestAnimationFrame(anim);
 
 }else{
 
+updateTileHighlights();
 resolveTile(target);
 
 }
@@ -547,6 +548,32 @@ document.getElementById("passive2").innerText=passive[1];
 
 document.getElementById("expenses1").innerText=expenses[0];
 document.getElementById("expenses2").innerText=expenses[1];
+
+}
+
+function updateTileHighlights(){
+
+// primero quitar brillo de todos los tiles
+
+for(let i=0;i<tiles.length;i++){
+
+tiles[i].material.emissive.set(0x000000);
+
+}
+
+// brillo jugador 1
+
+const tile1 = tiles[positions[0]];
+
+tile1.material.emissive.set(0x00ff00);
+tile1.material.emissiveIntensity = 0.6;
+
+// brillo jugador 2
+
+const tile2 = tiles[positions[1]];
+
+tile2.material.emissive.set(0xff0000);
+tile2.material.emissiveIntensity = 0.6;
 
 }
 
