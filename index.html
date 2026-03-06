@@ -128,8 +128,8 @@ const mat = new THREE.MeshStandardMaterial({color:0x555555});
 
 const tile = new THREE.Mesh(geo,mat);
 
-tile.position.x = (realX-width/2)(tileSize+0.3);
-tile.position.z = (z-height/2)(tileSize+0.3);
+tile.position.x = (realX-width/2) *(tileSize+0.3);
+tile.position.z = (z-height/2) * (tileSize+0.3);
 
 scene.add(tile);
 
