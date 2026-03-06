@@ -160,22 +160,28 @@ return "charity";
 // TABLERO
 // ========================
 // ========================
-// PISTA EN FORMA DE 8
+// PISTA EN FORMA DE 8 (MEJORADA)
 // ========================
 
 const tiles=[];
 const tileTypes=[];
 
 const tileSize = 2;
-const tileCount = 32;
-const radius = 10;
+const tileCount = 60;     // más cuadros
+const tileSpacing = 2.6;  // separación entre cuadros
+const radius = 8;
 
 for(let i=0;i<tileCount;i++){
 
 const t = (i/tileCount) * Math.PI * 2;
 
+// curva tipo 8
 const x = radius * Math.sin(t);
 const z = radius * Math.sin(t) * Math.cos(t);
+
+// escalar separación
+const posX = x * tileSpacing;
+const posZ = z * tileSpacing;
 
 const type = randomTileType();
 
@@ -187,9 +193,9 @@ color: tileColor(type)
 
 const tile = new THREE.Mesh(geo,mat);
 
-tile.position.set(x,0,z);
+tile.position.set(posX,0,posZ);
 
-// orientar el tile siguiendo la curva
+// rotar siguiendo la curva
 tile.rotation.y = -t;
 
 scene.add(tile);
