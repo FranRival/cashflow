@@ -252,9 +252,51 @@ let passive=[0,0];
 // DADO
 // ========================
 
+// ========================
+// DADO CON NUMEROS
+// ========================
+
+function createDiceMaterial(number){
+
+const canvas=document.createElement("canvas");
+canvas.width=256;
+canvas.height=256;
+
+const ctx=canvas.getContext("2d");
+
+ctx.fillStyle="white";
+ctx.fillRect(0,0,256,256);
+
+ctx.fillStyle="black";
+ctx.font="bold 160px Arial";
+ctx.textAlign="center";
+ctx.textBaseline="middle";
+
+ctx.fillText(number,128,140);
+
+const texture=new THREE.CanvasTexture(canvas);
+
+return new THREE.MeshStandardMaterial({map:texture});
+
+}
+
+const diceMaterials=[
+
+createDiceMaterial(1),
+createDiceMaterial(2),
+createDiceMaterial(3),
+createDiceMaterial(4),
+createDiceMaterial(5),
+createDiceMaterial(6)
+
+];
+
 const diceGeo=new THREE.BoxGeometry(1,1,1);
-const diceMat=new THREE.MeshStandardMaterial({color:0xffffff});
-const dice=new THREE.Mesh(diceGeo,diceMat);
+const dice=new THREE.Mesh(diceGeo,diceMaterials);
+
+dice.position.set(0,3,0);
+
+scene.add(dice);
 
 dice.position.set(0,3,0);
 scene.add(dice);
