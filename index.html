@@ -164,49 +164,38 @@ return "charity";
 // PISTA (TRACK)
 // ========================
 
+// ========================
+// PISTA CIRCULAR
+// ========================
+
 const tiles=[];
 const tileTypes=[];
 
 const tileSize = 2;
-const spacing = tileSize + 0.3;
+const radius = 10;
+const tileCount = 28;
 
-const trackWidth = 8;
-const trackHeight = 6;
+for(let i=0;i<tileCount;i++){
 
-// TOP
-for(let x=0;x<trackWidth;x++){
-createTile(x,0);
-}
+const angle = (i / tileCount) * Math.PI * 2;
 
-// RIGHT
-for(let z=1;z<trackHeight;z++){
-createTile(trackWidth-1,z);
-}
+const x = Math.cos(angle) * radius;
+const z = Math.sin(angle) * radius;
 
-// BOTTOM
-for(let x=trackWidth-2;x>=0;x--){
-createTile(x,trackHeight-1);
-}
+const type = randomTileType();
 
-// LEFT
-for(let z=trackHeight-2;z>0;z--){
-createTile(0,z);
-}
+const geo = new THREE.BoxGeometry(tileSize,0.5,tileSize);
 
-function createTile(x,z){
-
-const type=randomTileType();
-
-const geo=new THREE.BoxGeometry(tileSize,0.5,tileSize);
-
-const mat=new THREE.MeshStandardMaterial({
+const mat = new THREE.MeshStandardMaterial({
 color:tileColor(type)
 });
 
-const tile=new THREE.Mesh(geo,mat);
+const tile = new THREE.Mesh(geo,mat);
 
-tile.position.x=(x-trackWidth/2)*spacing;
-tile.position.z=(z-trackHeight/2)*spacing;
+tile.position.set(x,0,z);
+
+// rotar para seguir la pista
+tile.rotation.y = -angle;
 
 scene.add(tile);
 
@@ -214,7 +203,6 @@ tiles.push(tile);
 tileTypes.push(type);
 
 }
-
 // ========================
 // JUGADORES
 // ========================
