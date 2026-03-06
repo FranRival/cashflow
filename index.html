@@ -160,24 +160,44 @@ return "charity";
 // TABLERO
 // ========================
 
+// ========================
+// PISTA (TRACK)
+// ========================
+
 const tiles=[];
 const tileTypes=[];
 
-const tileSize=2;
-const width=6;
-const height=6;
+const tileSize = 2;
+const spacing = tileSize + 0.3;
 
-let direction=1;
+const trackWidth = 8;
+const trackHeight = 6;
 
-for(let z=0;z<height;z++){
+// TOP
+for(let x=0;x<trackWidth;x++){
+createTile(x,0);
+}
 
-for(let x=0;x<width;x++){
+// RIGHT
+for(let z=1;z<trackHeight;z++){
+createTile(trackWidth-1,z);
+}
 
-let realX=direction===1?x:(width-1-x);
+// BOTTOM
+for(let x=trackWidth-2;x>=0;x--){
+createTile(x,trackHeight-1);
+}
 
-const geo=new THREE.BoxGeometry(tileSize,0.5,tileSize);
+// LEFT
+for(let z=trackHeight-2;z>0;z--){
+createTile(0,z);
+}
+
+function createTile(x,z){
 
 const type=randomTileType();
+
+const geo=new THREE.BoxGeometry(tileSize,0.5,tileSize);
 
 const mat=new THREE.MeshStandardMaterial({
 color:tileColor(type)
@@ -185,17 +205,13 @@ color:tileColor(type)
 
 const tile=new THREE.Mesh(geo,mat);
 
-tile.position.x=(realX-width/2) * (tileSize+0.3);
-tile.position.z=(z-height/2) * (tileSize+0.3);
+tile.position.x=(x-trackWidth/2)*spacing;
+tile.position.z=(z-trackHeight/2)*spacing;
 
 scene.add(tile);
 
 tiles.push(tile);
 tileTypes.push(type);
-
-}
-
-direction*=-1;
 
 }
 
@@ -291,7 +307,7 @@ const player=currentPlayer===0?player1:player2;
 
 let target=positions[currentPlayer]+steps;
 
-if(target>=tiles.length) target=tiles.length-1;
+target = target % tiles.length;
 
 positions[currentPlayer]=target;
 
