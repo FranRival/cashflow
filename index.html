@@ -311,24 +311,35 @@ let currentPlayer=0;
 // LANZAR DADO
 // ========================
 
+
 function rollDice(){
+
+const result = Math.floor(Math.random()*6)+1;
+
+animateDice(result);
+
+}
+
+
+function animateDice(result){
 
 let frames=0;
 
 function spin(){
 
-dice.rotation.x+=0.2;
-dice.rotation.y+=0.2;
+dice.rotation.x+=0.25;
+dice.rotation.y+=0.25;
 
 frames++;
 
-if(frames<40){
+if(frames<25){
 
 requestAnimationFrame(spin);
 
 }else{
 
-const result=Math.floor(Math.random()*6)+1;
+setDiceFace(result);
+
 movePlayer(result);
 
 }
@@ -339,6 +350,37 @@ spin();
 
 }
 
+function setDiceFace(n){
+
+switch(n){
+
+case 1:
+dice.rotation.set(0,0,0);
+break;
+
+case 2:
+dice.rotation.set(0,Math.PI/2,0);
+break;
+
+case 3:
+dice.rotation.set(Math.PI/2,0,0);
+break;
+
+case 4:
+dice.rotation.set(-Math.PI/2,0,0);
+break;
+
+case 5:
+dice.rotation.set(0,-Math.PI/2,0);
+break;
+
+case 6:
+dice.rotation.set(Math.PI,0,0);
+break;
+
+}
+
+}
 // ========================
 // MOVIMIENTO
 // ========================
