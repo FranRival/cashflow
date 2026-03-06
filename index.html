@@ -159,43 +159,38 @@ return "charity";
 // ========================
 // TABLERO
 // ========================
-
 // ========================
-// PISTA (TRACK)
-// ========================
-
-// ========================
-// PISTA CIRCULAR
+// PISTA EN FORMA DE 8
 // ========================
 
 const tiles=[];
 const tileTypes=[];
 
 const tileSize = 2;
+const tileCount = 32;
 const radius = 10;
-const tileCount = 28;
 
 for(let i=0;i<tileCount;i++){
 
-const angle = (i / tileCount) * Math.PI * 2;
+const t = (i/tileCount) * Math.PI * 2;
 
-const x = Math.cos(angle) * radius;
-const z = Math.sin(angle) * radius;
+const x = radius * Math.sin(t);
+const z = radius * Math.sin(t) * Math.cos(t);
 
 const type = randomTileType();
 
 const geo = new THREE.BoxGeometry(tileSize,0.5,tileSize);
 
 const mat = new THREE.MeshStandardMaterial({
-color:tileColor(type)
+color: tileColor(type)
 });
 
 const tile = new THREE.Mesh(geo,mat);
 
 tile.position.set(x,0,z);
 
-// rotar para seguir la pista
-tile.rotation.y = -angle;
+// orientar el tile siguiendo la curva
+tile.rotation.y = -t;
 
 scene.add(tile);
 
