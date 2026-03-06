@@ -387,49 +387,59 @@ break;
 
 function movePlayer(steps){
 
-const player=currentPlayer===0?player1:player2;
+let stepCount = 0;
 
-let target=positions[currentPlayer]+steps;
+function stepMove(){
 
-target = target % tiles.length;
+if(stepCount >= steps){
 
-positions[currentPlayer]=target;
+resolveTile(positions[currentPlayer]);
+return;
 
-const tile=tiles[target];
+}
 
-tile.material.emissive=new THREE.Color(
-currentPlayer===0?0x003300:0x330000
-);
+stepCount++;
 
-const startX=player.position.x;
-const startZ=player.position.z;
+positions[currentPlayer] = (positions[currentPlayer] + 1) % tiles.length;
 
-const endX=tile.position.x;
-const endZ=tile.position.z;
+const player = currentPlayer === 0 ? player1 : player2;
 
-let p=0;
+const tile = tiles[positions[currentPlayer]];
+
+const startX = player.position.x;
+const startZ = player.position.z;
+
+const endX = tile.position.x;
+const endZ = tile.position.z;
+
+let p = 0;
 
 function anim(){
 
-p+=0.04;
+p += 0.08;
 
-player.position.x=startX+(endX-startX)*p;
-player.position.z=startZ+(endZ-startZ)*p;
+player.position.x = startX + (endX-startX)*p;
+player.position.z = startZ + (endZ-startZ)*p;
 
-if(p<1){
+if(p < 1){
 
 requestAnimationFrame(anim);
 
 }else{
 
 updateTileHighlights();
-resolveTile(target);
+
+setTimeout(stepMove,120);
 
 }
 
 }
 
 anim();
+
+}
+
+stepMove();
 
 }
 
