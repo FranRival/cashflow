@@ -159,90 +159,48 @@ return "charity";
 // ========================
 // TABLERO
 // ========================
+
 // ========================
-// PISTA 8 SUAVE CON DISTANCIA UNIFORME
+// PISTA (TRACK)
 // ========================
 
-const tiles = [];
-const tileTypes = [];
+// ========================
+// PISTA CIRCULAR
+// ========================
+
+const tiles=[];
+const tileTypes=[];
 
 const tileSize = 2;
-const tileSpacing = 2.6;      // distancia mínima entre cuadros
-const targetTiles = 80;       // número aproximado de cuadros
-const scale = 14;             // tamaño general de la pista
+const radius = 10;
+const tileCount = 28;
 
-// ---- curva base (8 suave tipo lemniscata de Gerono con deformación) ----
-function curve(t){
-  // t en [0, 2π]
-  const x = Math.cos(t) * (1.0 + 0.15*Math.sin(3*t));  // pequeña irregularidad
-  const z = Math.sin(t) * Math.cos(t) * (1.2 + 0.1*Math.cos(2*t));
-  return { x: x * scale, z: z * scale };
-}
+for(let i=0;i<tileCount;i++){
 
-// ---- tangente aproximada para orientar el tile ----
-function tangent(t){
-  const dt = 0.0001;
-  const p1 = curve(t);
-  const p2 = curve(t + dt);
-  return {
-    x: p2.x - p1.x,
-    z: p2.z - p1.z
-  };
-}
+const angle = (i / tileCount) * Math.PI * 2;
 
-// ---- muestreo por distancia ----
-let t = 0;
-let last = curve(0);
+const x = Math.cos(angle) * radius;
+const z = Math.sin(angle) * radius;
 
-createTile(last, 0);
+const type = randomTileType();
 
-while(tiles.length < targetTiles){
+const geo = new THREE.BoxGeometry(tileSize,0.5,tileSize);
 
-  t += 0.01;
+const mat = new THREE.MeshStandardMaterial({
+color:tileColor(type)
+});
 
-  const p = curve(t);
+const tile = new THREE.Mesh(geo,mat);
 
-  const dx = p.x - last.x;
-  const dz = p.z - last.z;
+tile.position.set(x,0,z);
 
-  const dist = Math.sqrt(dx*dx + dz*dz);
+// rotar para seguir la pista
+tile.rotation.y = -angle;
 
-  if(dist >= tileSpacing){
+scene.add(tile);
 
-    const tan = tangent(t);
-    const angle = Math.atan2(tan.z, tan.x);
-
-    createTile(p, angle);
-
-    last = p;
-
-  }
-
-  if(t > Math.PI * 2) break;
-
-}
-
-// ---- función de creación ----
-function createTile(pos, angle){
-
-  const type = randomTileType();
-
-  const geo = new THREE.BoxGeometry(tileSize,0.5,tileSize);
-
-  const mat = new THREE.MeshStandardMaterial({
-    color: tileColor(type)
-  });
-
-  const tile = new THREE.Mesh(geo, mat);
-
-  tile.position.set(pos.x, 0, pos.z);
-
-  tile.rotation.y = -angle;
-
-  scene.add(tile);
-
-  tiles.push(tile);
-  tileTypes.push(type);
+tiles.push(tile);
+tileTypes.push(type);
 
 }
 // ========================
