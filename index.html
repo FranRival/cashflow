@@ -34,8 +34,17 @@ font-size:16px;
 
 <div id="ui">
 <div>Turno: <span id="turn">Jugador 1</span></div>
+
 <div>Dinero J1: $<span id="money1">5000</span></div>
+<div>Pasivo J1: $<span id="passive1">0</span></div>
+<div>Gastos J1: $<span id="expenses1">800</span></div>
+
+<br>
+
 <div>Dinero J2: $<span id="money2">5000</span></div>
+<div>Pasivo J2: $<span id="passive2">0</span></div>
+<div>Gastos J2: $<span id="expenses2">800</span></div>
+
 <button onclick="rollDice()">Lanzar dado</button>
 </div>
 
@@ -43,16 +52,16 @@ font-size:16px;
 
 <script>
 
-// ----------------
+// ========================
 // ESCENA
-// ----------------
+// ========================
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x202020);
 
-// ----------------
-// CÁMARA
-// ----------------
+// ========================
+// CAMARA
+// ========================
 
 const camera = new THREE.PerspectiveCamera(
 75,
@@ -61,56 +70,83 @@ window.innerWidth/window.innerHeight,
 1000
 );
 
-let cameraAngle = 0;
-let cameraRadius = 25;
-let cameraHeight = 18;
+let cameraAngle=0;
+let cameraRadius=25;
+let cameraHeight=18;
 
-// posición inicial segura
 camera.position.set(0,cameraHeight,cameraRadius);
 camera.lookAt(0,0,0);
 
-// ----------------
-// RENDERER
-// ----------------
-
-const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(window.innerWidth,window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-// ----------------
-// LUCES
-// ----------------
-
-const light = new THREE.DirectionalLight(0xffffff,1);
-light.position.set(10,20,10);
-scene.add(light);
-
-scene.add(new THREE.AmbientLight(0xffffff,0.5));
-
-// ----------------
-// ROTACIÓN DE CÁMARA
-// (controlada por mouse)
-// ----------------
+// rotación cámara
 
 window.addEventListener("mousemove",(e)=>{
 
-cameraAngle = (e.clientX / window.innerWidth) * Math.PI * 2;
+cameraAngle=(e.clientX/window.innerWidth)Math.PI2;
 
-camera.position.x = Math.cos(cameraAngle) * cameraRadius;
-camera.position.z = Math.sin(cameraAngle) * cameraRadius;
-camera.position.y = cameraHeight;
+camera.position.x=Math.cos(cameraAngle)cameraRadius;
+camera.position.z=Math.sin(cameraAngle)cameraRadius;
+camera.position.y=cameraHeight;
 
 camera.lookAt(0,0,0);
 
 });
 
-// ----------------
-// TABLERO SERPENTEADO
-// ----------------
+// ========================
+// RENDERER
+// ========================
 
-// ----------------
-// TABLERO SERPENTEADO
-// ----------------
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth,window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// ========================
+// LUCES
+// ========================
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(10,20,10);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ========================
+// TIPOS DE CASILLA
+// ========================
+
+function tileColor(type){
+
+switch(type){
+
+case "payday": return 0x2ecc71;
+case "smallDeal": return 0x3498db;
+case "bigDeal": return 0x9b59b6;
+case "market": return 0xf1c40f;
+case "charity": return 0xffffff;
+case "doodad": return 0xe74c3c;
+
+default: return 0x555555;
+
+}
+
+}
+
+function randomTileType(){
+
+const r=Math.random();
+
+if(r<0.2) return "payday";
+if(r<0.45) return "smallDeal";
+if(r<0.6) return "bigDeal";
+if(r<0.75) return "market";
+if(r<0.9) return "doodad";
+
+return "charity";
+
+}
+
+// ========================
+// TABLERO
+// ========================
 
 const tiles=[];
 const tileTypes=[];
@@ -125,26 +161,25 @@ for(let z=0;z<height;z++){
 
 for(let x=0;x<width;x++){
 
-let realX = direction===1 ? x : (width-1-x);
+let realX=direction===1?x:(width-1-x);
 
-const geo = new THREE.BoxGeometry(tileSize,0.5,tileSize);
-const mat = new THREE.MeshStandardMaterial({color:0x555555});
+const geo=new THREE.BoxGeometry(tileSize,0.5,tileSize);
 
-const tile = new THREE.Mesh(geo,mat);
+const type=randomTileType();
 
-tile.position.x = (realX - width/2) * (tileSize + 0.3);
-tile.position.z = (z - height/2) * (tileSize + 0.3);
+const mat=new THREE.MeshStandardMaterial({
+color:tileColor(type)
+});
+
+const tile=new THREE.Mesh(geo,mat);
+
+tile.position.x=(realX-width/2)(tileSize+0.3);
+tile.position.z=(z-height/2)(tileSize+0.3);
 
 scene.add(tile);
 
 tiles.push(tile);
-
-// tipo de casilla
-let r=Math.random();
-
-if(r<0.33) tileTypes.push("expense");
-else if(r<0.66) tileTypes.push("income");
-else tileTypes.push("investment");
+tileTypes.push(type);
 
 }
 
@@ -152,9 +187,9 @@ direction*=-1;
 
 }
 
-// ----------------
+// ========================
 // JUGADORES
-// ----------------
+// ========================
 
 function createPlayer(color){
 
@@ -176,36 +211,35 @@ const player2=createPlayer(0xff4444);
 
 let positions=[0,0];
 
-// ----------------
-// SISTEMA FINANCIERO
-// ----------------
+// ========================
+// ECONOMIA
+// ========================
 
 let money=[5000,5000];
 let salary=[1000,1000];
 let expenses=[800,800];
 let passive=[0,0];
 
-// ----------------
+// ========================
 // DADO
-// ----------------
+// ========================
 
 const diceGeo=new THREE.BoxGeometry(1,1,1);
 const diceMat=new THREE.MeshStandardMaterial({color:0xffffff});
 const dice=new THREE.Mesh(diceGeo,diceMat);
 
 dice.position.set(0,3,0);
-
 scene.add(dice);
 
-// ----------------
+// ========================
 // TURNOS
-// ----------------
+// ========================
 
 let currentPlayer=0;
 
-// ----------------
+// ========================
 // LANZAR DADO
-// ----------------
+// ========================
 
 function rollDice(){
 
@@ -225,7 +259,6 @@ requestAnimationFrame(spin);
 }else{
 
 const result=Math.floor(Math.random()*6)+1;
-
 movePlayer(result);
 
 }
@@ -236,9 +269,9 @@ spin();
 
 }
 
-// ----------------
+// ========================
 // MOVIMIENTO
-// ----------------
+// ========================
 
 function movePlayer(steps){
 
@@ -252,8 +285,8 @@ positions[currentPlayer]=target;
 
 const tile=tiles[target];
 
-tile.material.color.set(
-currentPlayer===0?0x00aa00:0xaa0000
+tile.material.emissive=new THREE.Color(
+currentPlayer===0?0x003300:0x330000
 );
 
 const startX=player.position.x;
@@ -287,29 +320,59 @@ anim();
 
 }
 
-// ----------------
-// EVENTOS CASILLA
-// ----------------
+// ========================
+// EVENTOS
+// ========================
 
-function resolveTile(tileIndex){
+function resolveTile(index){
 
-const type=tileTypes[tileIndex];
+const type=tileTypes[index];
 
-if(type==="expense"){
+if(type==="payday"){
 
-money[currentPlayer]-=500;
-
-}
-
-if(type==="income"){
-
-money[currentPlayer]+=800;
+money[currentPlayer]+=salary[currentPlayer];
 
 }
 
-if(type==="investment"){
+if(type==="smallDeal"){
 
+if(money[currentPlayer]>=1000){
+
+money[currentPlayer]-=1000;
 passive[currentPlayer]+=100;
+
+}
+
+}
+
+if(type==="bigDeal"){
+
+if(money[currentPlayer]>=4000){
+
+money[currentPlayer]-=4000;
+passive[currentPlayer]+=500;
+
+}
+
+}
+
+if(type==="market"){
+
+let change=Math.floor(Math.random()*1000)-500;
+money[currentPlayer]+=change;
+
+}
+
+if(type==="doodad"){
+
+money[currentPlayer]-=700;
+
+}
+
+if(type==="charity"){
+
+money[currentPlayer]-=300;
+expenses[currentPlayer]-=50;
 
 }
 
@@ -317,25 +380,23 @@ resolveTurn();
 
 }
 
-// ----------------
+// ========================
 // FIN TURNO
-// ----------------
+// ========================
 
 function resolveTurn(){
 
-money[currentPlayer]+=salary[currentPlayer];
 money[currentPlayer]+=passive[currentPlayer];
 money[currentPlayer]-=expenses[currentPlayer];
 
 updateUI();
-
 switchTurn();
 
 }
 
-// ----------------
+// ========================
 // IA
-// ----------------
+// ========================
 
 function aiTurn(){
 
@@ -345,9 +406,9 @@ rollDice();
 
 }
 
-// ----------------
+// ========================
 // CAMBIO TURNO
-// ----------------
+// ========================
 
 function switchTurn(){
 
@@ -360,25 +421,30 @@ if(currentPlayer===1) aiTurn();
 
 }
 
-// ----------------
+// ========================
 // UI
-// ----------------
+// ========================
 
 function updateUI(){
 
 document.getElementById("money1").innerText=money[0];
 document.getElementById("money2").innerText=money[1];
 
+document.getElementById("passive1").innerText=passive[0];
+document.getElementById("passive2").innerText=passive[1];
+
+document.getElementById("expenses1").innerText=expenses[0];
+document.getElementById("expenses2").innerText=expenses[1];
+
 }
 
-// ----------------
+// ========================
 // LOOP
-// ----------------
+// ========================
 
 function animate(){
 
 requestAnimationFrame(animate);
-
 renderer.render(scene,camera);
 
 }
