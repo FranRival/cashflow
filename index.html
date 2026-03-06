@@ -81,10 +81,10 @@ camera.lookAt(0,0,0);
 
 window.addEventListener("mousemove",(e)=>{
 
-cameraAngle=(e.clientX/window.innerWidth)Math.PI2;
+cameraAngle=(e.clientX/window.innerWidth)* Math.PI2;
 
-camera.position.x=Math.cos(cameraAngle)cameraRadius;
-camera.position.z=Math.sin(cameraAngle)cameraRadius;
+camera.position.x=Math.cos(cameraAngle) * cameraRadius;
+camera.position.z=Math.sin(cameraAngle)* cameraRadius;
 camera.position.y=cameraHeight;
 
 camera.lookAt(0,0,0);
@@ -173,8 +173,8 @@ color:tileColor(type)
 
 const tile=new THREE.Mesh(geo,mat);
 
-tile.position.x=(realX-width/2)(tileSize+0.3);
-tile.position.z=(z-height/2)(tileSize+0.3);
+tile.position.x=(realX-width/2) * (tileSize+0.3);
+tile.position.z=(z-height/2) * (tileSize+0.3);
 
 scene.add(tile);
 
