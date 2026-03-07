@@ -24,7 +24,7 @@ ESCENA
 ====================== */
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xffffff);
+scene.background = new THREE.Color(0x000000);
 
 /* ======================
 CAMARA
@@ -215,7 +215,7 @@ scene.add(tile);
 
 }
 
-
+//dado 
 function createDiceMaterial(number){
 
 const canvas = document.createElement("canvas");
@@ -260,6 +260,46 @@ createDiceMaterial(6)
 dice.position.set(0,1.2,0);
 
 scene.add(dice);
+
+
+//jugadores 
+
+function createPlayer(color){
+
+const geometry = new THREE.SphereGeometry(0.5,32,32);
+
+const material = new THREE.MeshStandardMaterial({
+color:color
+});
+
+const player = new THREE.Mesh(geometry,material);
+
+player.position.y = 1;
+
+scene.add(player);
+
+return player;
+
+}
+
+const player1 = createPlayer(0x00ff00);
+const player2 = createPlayer(0xff4444);
+
+let positions = [0,0];
+
+function placePlayers(){
+
+const tile = tiles[0];
+
+player1.position.x = tile.position.x;
+player1.position.z = tile.position.z;
+
+player2.position.x = tile.position.x + 0.6;
+player2.position.z = tile.position.z;
+
+}
+
+placePlayers();
 /* ======================
 LOOP
 ====================== */
