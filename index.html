@@ -30,7 +30,6 @@ color:white;
 
 </div>
 
-<button onclick="rollDice()">Lanzar dado</button>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
@@ -268,7 +267,7 @@ function rollDice(){
 
 const result = Math.floor(Math.random()*6)+1;
 
-console.log("Resultado dado:",result);
+console.log("Turno Jugador", currentPlayer+1, "Resultado dado:",result);
 
 movePlayer(result);
 
@@ -277,6 +276,8 @@ movePlayer(result);
 function switchTurn(){
 
 currentPlayer = currentPlayer === 0 ? 1 : 0;
+console.log("Nuevo turno jugador", currentPlayer+1);
+
 
 }
 
