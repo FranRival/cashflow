@@ -144,10 +144,10 @@ canvas.height = 128;
 
 const ctx = canvas.getContext("2d");
 
-ctx.fillStyle = tileColor(type).toString(16) === "ffffff" ? "#ffffff" : "#ffffff";
+ctx.fillStyle = "#" + tileColor(type).toString(16).padStart(6,"0")
 ctx.fillRect(0,0,256,128);
 
-ctx.fillStyle="black";
+ctx.fillStyle=(type==="charity")?"black":"black";
 ctx.font="bold 36px Arial";
 ctx.textAlign="center";
 ctx.textBaseline="middle";
