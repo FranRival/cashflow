@@ -139,6 +139,10 @@ bevelEnabled:false
 
 geometry.rotateX(-Math.PI/2);
 
+/* CORRECCIÓN DEL PROBLEMA BICOLOR */
+
+geometry.computeVertexNormals();
+
 return geometry;
 
 }
