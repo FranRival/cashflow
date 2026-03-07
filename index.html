@@ -2,62 +2,33 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Cashflow MVP 3D</title>
+<title>Trapecios Cashflow</title>
 
 <style>
 body{
 margin:0;
 overflow:hidden;
-background:#ffffff;
-font-family:Arial;
-}
-
-#ui{
-position:absolute;
-top:20px;
-left:20px;
-background:rgba(0,0,0,0.6);
-padding:12px;
-border-radius:8px;
-color:white;
-}
-
-button{
-padding:10px;
-margin-top:8px;
-font-size:16px;
+background:white;
 }
 </style>
 
 </head>
 <body>
 
-<div id="ui">
-<div>Turno: <span id="turn">Jugador 1</span></div>
-
-<div>Dinero J1: $<span id="money1">5000</span></div>
-<div>Pasivo J1: $<span id="passive1">0</span></div>
-<div>Gastos J1: $<span id="expenses1">800</span></div>
-
-<br>
-
-<div>Dinero J2: $<span id="money2">5000</span></div>
-<div>Pasivo J2: $<span id="passive2">0</span></div>
-<div>Gastos J2: $<span id="expenses2">800</span></div>
-
-<button onclick="rollDice()">Lanzar dado</button>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
 <script>
 
-// ======================
-// ESCENA
-// ======================
+/* ======================
+ESCENA
+====================== */
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xffffff);
+
+/* ======================
+CAMARA
+====================== */
 
 const camera = new THREE.PerspectiveCamera(
 60,
@@ -66,45 +37,30 @@ window.innerWidth/window.innerHeight,
 1000
 );
 
-let cameraRadius=15;
-let cameraHeight=6;
-let cameraAngle=0;
-
-camera.position.set(0,cameraHeight,cameraRadius);
+camera.position.set(0,12,16);
 camera.lookAt(0,0,0);
 
-window.addEventListener("mousemove",(e)=>{
+/* ======================
+RENDER
+====================== */
 
-cameraAngle=(e.clientX/window.innerWidth)*Math.PI*2;
-
-camera.position.x=Math.cos(cameraAngle)*cameraRadius;
-camera.position.z=Math.sin(cameraAngle)*cameraRadius;
-
-camera.lookAt(0,0,0);
-
-});
-
-// ======================
-// RENDER
-// ======================
-
-const renderer=new THREE.WebGLRenderer({antialias:true});
+const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(window.innerWidth,window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// ======================
-// LUCES
-// ======================
+/* ======================
+LUCES
+====================== */
 
 scene.add(new THREE.AmbientLight(0xffffff,0.9));
 
-const light=new THREE.DirectionalLight(0xffffff,0.4);
+const light = new THREE.DirectionalLight(0xffffff,0.6);
 light.position.set(10,20,10);
 scene.add(light);
 
-// ======================
-// COLORES
-// ======================
+/* ======================
+COLORES
+====================== */
 
 function tileColor(type){
 
@@ -117,15 +73,15 @@ case "market": return 0xf1c40f;
 case "charity": return 0xffffff;
 case "doodad": return 0xe74c3c;
 
-default: return 0x555555;
+default: return 0x888888;
 
 }
 
 }
 
-// ======================
-// RANDOM CASILLA
-// ======================
+/* ======================
+TIPO RANDOM
+====================== */
 
 function randomTileType(){
 
@@ -141,81 +97,77 @@ return "charity";
 
 }
 
-// ======================
-// TEXTO CARA EXTERIOR
-// ======================
+/* ======================
+TRAPECIO
+====================== */
 
-function createLabel(text,color){
+function createTrapezoid(type){
 
-const canvas=document.createElement("canvas");
-canvas.width=256;
-canvas.height=128;
+const group = new THREE.Group();
 
-const ctx=canvas.getContext("2d");
+const widthFront = 2;
+const widthBack = 1.2;
+const length = 3;
+const height = 0.5;
 
-ctx.fillStyle=color;
+/* cuerpo del trapecio */
+
+const shape = new THREE.Shape();
+
+shape.moveTo(-widthFront/2,-length/2);
+shape.lineTo(widthFront/2,-length/2);
+shape.lineTo(widthBack/2,length/2);
+shape.lineTo(-widthBack/2,length/2);
+
+const geometry = new THREE.ExtrudeGeometry(shape,{
+depth:height,
+bevelEnabled:false
+});
+
+geometry.rotateX(-Math.PI/2);
+
+const material = new THREE.MeshLambertMaterial({
+color:tileColor(type)
+});
+
+const body = new THREE.Mesh(geometry,material);
+
+group.add(body);
+
+/* ======================
+TEXTO EXTERIOR
+====================== */
+
+const canvas = document.createElement("canvas");
+canvas.width = 256;
+canvas.height = 128;
+
+const ctx = canvas.getContext("2d");
+
+ctx.fillStyle = tileColor(type).toString(16) === "ffffff" ? "#ffffff" : "#ffffff";
 ctx.fillRect(0,0,256,128);
-
-ctx.strokeStyle="black";
-ctx.lineWidth=6;
-ctx.strokeRect(0,0,256,128);
 
 ctx.fillStyle="black";
 ctx.font="bold 36px Arial";
 ctx.textAlign="center";
 ctx.textBaseline="middle";
 
-ctx.fillText(text.toUpperCase(),128,64);
+ctx.fillText(type.toUpperCase(),128,64);
 
-const texture=new THREE.CanvasTexture(canvas);
+const texture = new THREE.CanvasTexture(canvas);
 
-const mat=new THREE.MeshBasicMaterial({map:texture});
-
-const geo=new THREE.PlaneGeometry(2.2,1);
-
-return new THREE.Mesh(geo,mat);
-
-}
-
-// ======================
-// TRAPECIO
-// ======================
-
-function createTile(type){
-
-const group=new THREE.Group();
-
-const color=tileColor(type);
-
-const shape=new THREE.Shape();
-
-shape.moveTo(-1,0);
-shape.lineTo(1,0);
-shape.lineTo(0.7,2.8);
-shape.lineTo(-0.7,2.8);
-shape.closePath();
-
-const geo=new THREE.ExtrudeGeometry(shape,{
-depth:0.5,
-bevelEnabled:false
+const labelMaterial = new THREE.MeshBasicMaterial({
+map:texture,
+transparent:false
 });
 
-geo.rotateX(-Math.PI/2);
+const labelGeometry = new THREE.PlaneGeometry(2,1);
 
-const mat=new THREE.MeshLambertMaterial({
-color:color,
-emissive:0x000000
-});
+const label = new THREE.Mesh(labelGeometry,labelMaterial);
 
-const body=new THREE.Mesh(geo,mat);
+/* posición en la cara frontal */
 
-group.add(body);
-
-// cara exterior con texto
-
-const label=createLabel(type,color);
-
-label.position.set(0,0.55,2.75);
+label.position.set(0,0.6,length/2 + 0.02);
 
 group.add(label);
 
@@ -223,166 +175,33 @@ return group;
 
 }
 
-// ======================
-// TABLERO
-// ======================
+/* ======================
+CIRCULO
+====================== */
 
-const tiles=[];
-const tileTypes=[];
-
-const tileCount=24;
-const radius=8;
+const tileCount = 24;
+const radius = 8;
 
 for(let i=0;i<tileCount;i++){
 
-const angle=i/tileCount*Math.PI*2;
+const angle = i/tileCount*Math.PI*2;
 
-const type=randomTileType();
+const type = randomTileType();
 
-const tile=createTile(type);
+const tile = createTrapezoid(type);
 
-const x=Math.cos(angle)*radius;
-const z=Math.sin(angle)*radius;
+tile.position.x = Math.cos(angle)*radius;
+tile.position.z = Math.sin(angle)*radius;
 
-tile.position.set(x,0,z);
-tile.rotation.y=-angle+Math.PI/2;
+tile.rotation.y = -angle + Math.PI/2;
 
 scene.add(tile);
 
-tiles.push(tile);
-tileTypes.push(type);
-
 }
 
-// ======================
-// JUGADORES
-// ======================
-
-function createPlayer(color){
-
-const geo=new THREE.SphereGeometry(0.6,32,32);
-const mat=new THREE.MeshLambertMaterial({color});
-
-const p=new THREE.Mesh(geo,mat);
-p.position.y=1;
-
-scene.add(p);
-
-return p;
-
-}
-
-const player1=createPlayer(0x00ff00);
-const player2=createPlayer(0xff4444);
-
-let positions=[0,0];
-
-updateTileHighlights();
-
-// ======================
-// DADO
-// ======================
-
-function createDiceMaterial(number){
-
-const canvas=document.createElement("canvas");
-canvas.width=256;
-canvas.height=256;
-
-const ctx=canvas.getContext("2d");
-
-ctx.fillStyle="white";
-ctx.fillRect(0,0,256,256);
-
-ctx.fillStyle="black";
-ctx.font="bold 160px Arial";
-ctx.textAlign="center";
-ctx.textBaseline="middle";
-
-ctx.fillText(number,128,140);
-
-return new THREE.MeshLambertMaterial({
-map:new THREE.CanvasTexture(canvas)
-});
-
-}
-
-const dice=new THREE.Mesh(
-new THREE.BoxGeometry(1,1,1),
-[
-createDiceMaterial(1),
-createDiceMaterial(2),
-createDiceMaterial(3),
-createDiceMaterial(4),
-createDiceMaterial(5),
-createDiceMaterial(6)
-]
-);
-
-dice.position.set(0,3,0);
-scene.add(dice);
-
-// ======================
-// MOVIMIENTO
-// ======================
-
-let currentPlayer=0;
-
-function rollDice(){
-
-const result=Math.floor(Math.random()*6)+1;
-movePlayer(result);
-
-}
-
-function movePlayer(steps){
-
-let step=0;
-
-function next(){
-
-if(step>=steps) return;
-
-step++;
-
-positions[currentPlayer]=(positions[currentPlayer]+1)%tiles.length;
-
-const player=currentPlayer===0?player1:player2;
-const tile=tiles[positions[currentPlayer]];
-
-player.position.x=tile.position.x;
-player.position.z=tile.position.z;
-
-updateTileHighlights();
-
-setTimeout(next,200);
-
-}
-
-next();
-
-}
-
-// ======================
-// HIGHLIGHT
-// ======================
-
-function updateTileHighlights(){
-
-for(let i=0;i<tiles.length;i++){
-
-tiles[i].children[0].material.emissive.set(0x000000);
-
-}
-
-tiles[positions[0]].children[0].material.emissive.set(0x00ff00);
-tiles[positions[1]].children[0].material.emissive.set(0xff0000);
-
-}
-
-// ======================
-// LOOP
-// ======================
+/* ======================
+LOOP
+====================== */
 
 function animate(){
 
