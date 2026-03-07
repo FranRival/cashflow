@@ -8,15 +8,11 @@
 body{
 margin:0;
 overflow:hidden;
-background:white;
+background:black;
+font-family:Arial;
 }
 
-
-</style>
-
-</head>
-<body>
-<div style="
+#ui{
 position:absolute;
 top:20px;
 left:20px;
@@ -24,13 +20,21 @@ background:rgba(0,0,0,0.6);
 padding:10px;
 border-radius:8px;
 color:white;
-">
+}
 
+button{
+padding:10px;
+font-size:16px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div id="ui">
 <button onclick="rollDice()">Lanzar dado</button>
-
 </div>
-
-<button onclick="rollDice()">Lanzar dado</button>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
@@ -54,14 +58,12 @@ window.innerWidth/window.innerHeight,
 1000
 );
 
-camera.position.set(0,12,16);
-camera.lookAt(0,0,0);
-
 let cameraAngle = 0;
 let cameraRadius = 15;
 let cameraHeight = 8;
 
-let currentPlayer = 0;
+camera.position.set(0,cameraHeight,cameraRadius);
+camera.lookAt(0,0,0);
 
 window.addEventListener("mousemove",(e)=>{
 
@@ -145,8 +147,6 @@ const widthBack = 1.2;
 const length = 3;
 const height = 0.5;
 
-/* cuerpo del trapecio */
-
 const shape = new THREE.Shape();
 
 shape.moveTo(-widthFront/2,-length/2);
@@ -169,9 +169,7 @@ const body = new THREE.Mesh(geometry,material);
 
 group.add(body);
 
-/* ======================
-TEXTO EXTERIOR
-====================== */
+/* TEXTO */
 
 const canvas = document.createElement("canvas");
 canvas.width = 256;
@@ -179,10 +177,10 @@ canvas.height = 128;
 
 const ctx = canvas.getContext("2d");
 
-ctx.fillStyle = "#" + tileColor(type).toString(16).padStart(6,"0")
+ctx.fillStyle = "#" + tileColor(type).toString(16).padStart(6,"0");
 ctx.fillRect(0,0,256,128);
 
-ctx.fillStyle=(type==="charity")?"black":"black";
+ctx.fillStyle="black";
 ctx.font="bold 36px Arial";
 ctx.textAlign="center";
 ctx.textBaseline="middle";
@@ -191,16 +189,10 @@ ctx.fillText(type.toUpperCase(),128,64);
 
 const texture = new THREE.CanvasTexture(canvas);
 
-const labelMaterial = new THREE.MeshBasicMaterial({
-map:texture,
-transparent:false
-});
-
+const labelMaterial = new THREE.MeshBasicMaterial({map:texture});
 const labelGeometry = new THREE.PlaneGeometry(2,1);
 
 const label = new THREE.Mesh(labelGeometry,labelMaterial);
-
-/* posición en la cara frontal */
 
 label.position.set(0,0.6,length/2 + 0.02);
 
@@ -211,7 +203,7 @@ return group;
 }
 
 /* ======================
-CIRCULO
+TABLERO
 ====================== */
 
 const tileCount = 24;
@@ -237,7 +229,10 @@ tiles.push(tile);
 
 }
 
-//dado 
+/* ======================
+DADO
+====================== */
+
 function createDiceMaterial(number){
 
 const canvas = document.createElement("canvas");
@@ -246,107 +241,19 @@ canvas.height = 256;
 
 const ctx = canvas.getContext("2d");
 
-ctx.fillStyle = "white";
+ctx.fillStyle="white";
 ctx.fillRect(0,0,256,256);
 
-ctx.fillStyle = "black";
-ctx.font = "bold 160px Arial";
-ctx.textAlign = "center";
-ctx.textBaseline = "middle";
+ctx.fillStyle="black";
+ctx.font="bold 160px Arial";
+ctx.textAlign="center";
+ctx.textBaseline="middle";
 
 ctx.fillText(number,128,140);
 
-const texture = new THREE.CanvasTexture(canvas);
-
-return new THREE.MeshStandardMaterial({map:texture});
-
-}
-
-
-
-//girar dado
-function rollDice(){
-
-if(currentPlayer !== 0) return;
-
-const result = Math.floor(Math.random()*6)+1;
-
-console.log("Jugador sacó:",result);
-
-movePlayer(result);
-
-}
-
-
-// IA
-function aiTurn(){
-
-setTimeout(()=>{
-
-const result = Math.floor(Math.random()*6)+1;
-
-console.log("IA sacó:", result);
-
-movePlayer(result);
-
-},800);
-
-}
-
-
-// cambio de turno
-function switchTurn(){
-
-currentPlayer = currentPlayer === 0 ? 1 : 0;
-
-console.log("Turno jugador", currentPlayer + 1);
-
-if(currentPlayer === 1){
-
-aiTurn();
-
-}
-
-}
-
-function switchTurn(){
-
-currentPlayer = currentPlayer === 0 ? 1 : 0;
-
-}
-
-//mover jugador 
-function movePlayer(steps){
-
-let step = 0;
-
-function nextStep(){
-
-if(step >= steps){
-
-switchTurn();
-return;
-
-}
-
-step++;
-
-positions[currentPlayer] =
-(positions[currentPlayer] + 1) % tiles.length;
-
-const player =
-currentPlayer === 0 ? player1 : player2;
-
-const tile = tiles[positions[currentPlayer]];
-
-player.position.x = tile.position.x;
-player.position.z = tile.position.z;
-
-setTimeout(nextStep,200);
-
-}
-
-nextStep();
+return new THREE.MeshStandardMaterial({
+map:new THREE.CanvasTexture(canvas)
+});
 
 }
 
@@ -370,20 +277,19 @@ dice.position.set(0,1.2,0);
 
 scene.add(dice);
 
-
-//jugadores 
+/* ======================
+JUGADORES
+====================== */
 
 function createPlayer(color){
 
-const geometry = new THREE.SphereGeometry(0.5,32,32);
+const geo=new THREE.SphereGeometry(0.5,32,32);
 
-const material = new THREE.MeshStandardMaterial({
-color:color
-});
+const mat=new THREE.MeshStandardMaterial({color});
 
-const player = new THREE.Mesh(geometry,material);
+const player=new THREE.Mesh(geo,mat);
 
-player.position.y = 1;
+player.position.y=1;
 
 scene.add(player);
 
@@ -391,24 +297,119 @@ return player;
 
 }
 
-const player1 = createPlayer(0x00ff00);
-const player2 = createPlayer(0xff4444);
+const player1=createPlayer(0x00ff00);
+const player2=createPlayer(0xff4444);
 
-let positions = [0,0];
+let positions=[0,0];
 
 function placePlayers(){
 
-const tile = tiles[0];
+const tile=tiles[0];
 
-player1.position.x = tile.position.x;
-player1.position.z = tile.position.z;
+player1.position.x=tile.position.x;
+player1.position.z=tile.position.z;
 
-player2.position.x = tile.position.x + 0.6;
-player2.position.z = tile.position.z;
+player2.position.x=tile.position.x+0.6;
+player2.position.z=tile.position.z;
 
 }
 
 placePlayers();
+
+/* ======================
+TURNOS
+====================== */
+
+let currentPlayer=0;
+
+/* ======================
+LANZAR DADO
+====================== */
+
+function rollDice(){
+
+if(currentPlayer!==0) return;
+
+const result=Math.floor(Math.random()*6)+1;
+
+console.log("Jugador sacó:",result);
+
+movePlayer(result);
+
+}
+
+/* ======================
+IA
+====================== */
+
+function aiTurn(){
+
+setTimeout(()=>{
+
+const result=Math.floor(Math.random()*6)+1;
+
+console.log("IA sacó:",result);
+
+movePlayer(result);
+
+},800);
+
+}
+
+/* ======================
+CAMBIO TURNO
+====================== */
+
+function switchTurn(){
+
+currentPlayer=currentPlayer===0?1:0;
+
+console.log("Turno jugador",currentPlayer+1);
+
+if(currentPlayer===1){
+
+aiTurn();
+
+}
+
+}
+
+/* ======================
+MOVIMIENTO
+====================== */
+
+function movePlayer(steps){
+
+let step=0;
+
+function nextStep(){
+
+if(step>=steps){
+
+switchTurn();
+return;
+
+}
+
+step++;
+
+positions[currentPlayer]=(positions[currentPlayer]+1)%tiles.length;
+
+const player=currentPlayer===0?player1:player2;
+
+const tile=tiles[positions[currentPlayer]];
+
+player.position.x=tile.position.x;
+player.position.z=tile.position.z;
+
+setTimeout(nextStep,200);
+
+}
+
+nextStep();
+
+}
+
 /* ======================
 LOOP
 ====================== */
@@ -417,8 +418,8 @@ function animate(){
 
 requestAnimationFrame(animate);
 
-dice.rotation.x += 0.01;
-dice.rotation.y += 0.01;
+dice.rotation.x+=0.01;
+dice.rotation.y+=0.01;
 
 renderer.render(scene,camera);
 
