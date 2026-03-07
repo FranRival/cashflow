@@ -71,8 +71,10 @@ window.innerWidth/window.innerHeight,
 );
 
 let cameraAngle=0;
-let cameraRadius=17;
-let cameraHeight=8;
+let cameraRadius=15;
+let cameraHeight=5;
+
+
 
 camera.position.set(0,cameraHeight,cameraRadius);
 camera.lookAt(0,0,0);
@@ -187,9 +189,7 @@ const type = randomTileType();
 
 const geo = new THREE.BoxGeometry(tileWidth,0.5,tileLength);
 
-const mat = new THREE.MeshStandardMaterial({
-color:tileColor(type)
-});
+const mat = createTileMaterial(type);
 
 const tile = new THREE.Mesh(geo,mat);
 
@@ -227,6 +227,7 @@ const player1=createPlayer(0x00ff00);
 const player2=createPlayer(0xff4444);
 
 let positions=[0,0];
+updateTileHighlights()
 
 // ========================
 // ECONOMIA - 
@@ -237,9 +238,35 @@ let salary=[1000,1000];
 let expenses=[800,800];
 let passive=[0,0];
 
-// ========================
-// DADO
-// ========================
+
+function createTileMaterial(type){
+
+const canvas=document.createElement("canvas");
+canvas.width=256;
+canvas.height=128;
+
+const ctx=canvas.getContext("2d");
+
+ctx.fillStyle= "#" + tileColor(type).toString(16);
+ctx.fillRect(0,0,256,128);
+
+ctx.strokeStyle="black";
+ctx.lineWidth=6;
+ctx.strokeRect(0,0,256,128);
+
+ctx.fillStyle="black";
+ctx.font="bold 40px Arial";
+ctx.textAlign="center";
+ctx.textBaseline="middle";
+
+ctx.fillText(type.toUpperCase(),128,64);
+
+const texture=new THREE.CanvasTexture(canvas);
+
+return new THREE.MeshStandardMaterial({map:texture, emissive:0x00000});
+
+}
+
 
 // ========================
 // DADO CON NUMEROS
@@ -282,10 +309,6 @@ createDiceMaterial(6)
 
 const diceGeo=new THREE.BoxGeometry(1,1,1);
 const dice=new THREE.Mesh(diceGeo,diceMaterials);
-
-dice.position.set(0,3,0);
-
-scene.add(dice);
 
 dice.position.set(0,3,0);
 scene.add(dice);
