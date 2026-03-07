@@ -198,6 +198,8 @@ CIRCULO
 const tileCount = 24;
 const radius = 6.2;
 
+const tiles = [];
+
 for(let i=0;i<tileCount;i++){
 
 const angle = i/tileCount*Math.PI*2;
@@ -212,6 +214,7 @@ tile.position.z = Math.sin(angle)*radius;
 tile.rotation.y = -angle + Math.PI/2;
 
 scene.add(tile);
+tiles.push(tile);
 
 }
 
