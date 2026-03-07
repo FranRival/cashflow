@@ -57,6 +57,7 @@ font-size:16px;
 // ======================
 
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xffffff);
 
 const camera = new THREE.PerspectiveCamera(
 60,
@@ -66,7 +67,7 @@ window.innerWidth/window.innerHeight,
 );
 
 let cameraRadius=15;
-let cameraHeight=5;
+let cameraHeight=6;
 let cameraAngle=0;
 
 camera.position.set(0,cameraHeight,cameraRadius);
@@ -78,14 +79,13 @@ cameraAngle=(e.clientX/window.innerWidth)*Math.PI*2;
 
 camera.position.x=Math.cos(cameraAngle)*cameraRadius;
 camera.position.z=Math.sin(cameraAngle)*cameraRadius;
-camera.position.y=cameraHeight;
 
 camera.lookAt(0,0,0);
 
 });
 
 // ======================
-// RENDERER
+// RENDER
 // ======================
 
 const renderer=new THREE.WebGLRenderer({antialias:true});
@@ -98,12 +98,12 @@ document.body.appendChild(renderer.domElement);
 
 scene.add(new THREE.AmbientLight(0xffffff,0.9));
 
-const dirLight=new THREE.DirectionalLight(0xffffff,0.4);
-dirLight.position.set(10,20,10);
-scene.add(dirLight);
+const light=new THREE.DirectionalLight(0xffffff,0.4);
+light.position.set(10,20,10);
+scene.add(light);
 
 // ======================
-// COLORES CASILLAS
+// COLORES
 // ======================
 
 function tileColor(type){
@@ -124,7 +124,7 @@ default: return 0x555555;
 }
 
 // ======================
-// RANDOM TIPO
+// RANDOM CASILLA
 // ======================
 
 function randomTileType(){
@@ -142,35 +142,10 @@ return "charity";
 }
 
 // ======================
-// GEOMETRIA TRAPECIO
+// TEXTO CARA EXTERIOR
 // ======================
 
-function createTrapezoid(w1,w2,length,height){
-
-const shape=new THREE.Shape();
-
-shape.moveTo(-w1/2,0);
-shape.lineTo(w1/2,0);
-shape.lineTo(w2/2,length);
-shape.lineTo(-w2/2,length);
-shape.closePath();
-
-const geo=new THREE.ExtrudeGeometry(shape,{
-depth:height,
-bevelEnabled:false
-});
-
-geo.rotateX(-Math.PI/2);
-
-return geo;
-
-}
-
-// ======================
-// TEXTO EXTERIOR
-// ======================
-
-function createLabel(text){
+function createLabel(text,color){
 
 const canvas=document.createElement("canvas");
 canvas.width=256;
@@ -178,10 +153,14 @@ canvas.height=128;
 
 const ctx=canvas.getContext("2d");
 
-ctx.fillStyle="#ffffff";
+ctx.fillStyle=color;
 ctx.fillRect(0,0,256,128);
 
-ctx.fillStyle="#000000";
+ctx.strokeStyle="black";
+ctx.lineWidth=6;
+ctx.strokeRect(0,0,256,128);
+
+ctx.fillStyle="black";
 ctx.font="bold 36px Arial";
 ctx.textAlign="center";
 ctx.textBaseline="middle";
@@ -190,11 +169,57 @@ ctx.fillText(text.toUpperCase(),128,64);
 
 const texture=new THREE.CanvasTexture(canvas);
 
-const mat=new THREE.MeshBasicMaterial({map:texture,transparent:true});
+const mat=new THREE.MeshBasicMaterial({map:texture});
 
-const geo=new THREE.PlaneGeometry(2.5,1);
+const geo=new THREE.PlaneGeometry(2.2,1);
 
 return new THREE.Mesh(geo,mat);
+
+}
+
+// ======================
+// TRAPECIO
+// ======================
+
+function createTile(type){
+
+const group=new THREE.Group();
+
+const color=tileColor(type);
+
+const shape=new THREE.Shape();
+
+shape.moveTo(-1,0);
+shape.lineTo(1,0);
+shape.lineTo(0.7,2.8);
+shape.lineTo(-0.7,2.8);
+shape.closePath();
+
+const geo=new THREE.ExtrudeGeometry(shape,{
+depth:0.5,
+bevelEnabled:false
+});
+
+geo.rotateX(-Math.PI/2);
+
+const mat=new THREE.MeshLambertMaterial({
+color:color,
+emissive:0x000000
+});
+
+const body=new THREE.Mesh(geo,mat);
+
+group.add(body);
+
+// cara exterior con texto
+
+const label=createLabel(type,color);
+
+label.position.set(0,0.55,2.75);
+
+group.add(label);
+
+return group;
 
 }
 
@@ -208,28 +233,13 @@ const tileTypes=[];
 const tileCount=24;
 const radius=8;
 
-const tileWidth=1.6;
-const tileLength=3;
-
 for(let i=0;i<tileCount;i++){
 
 const angle=i/tileCount*Math.PI*2;
 
 const type=randomTileType();
 
-const geo=createTrapezoid(
-tileWidth*1.2,
-tileWidth*0.8,
-tileLength,
-0.5
-);
-
-const mat=new THREE.MeshLambertMaterial({
-color:tileColor(type),
-emissive:0x000000
-});
-
-const tile=new THREE.Mesh(geo,mat);
+const tile=createTile(type);
 
 const x=Math.cos(angle)*radius;
 const z=Math.sin(angle)*radius;
@@ -242,22 +252,6 @@ scene.add(tile);
 tiles.push(tile);
 tileTypes.push(type);
 
-// TEXTO EXTERIOR
-
-const label=createLabel(type);
-
-const r=radius+tileLength*0.55;
-
-label.position.set(
-Math.cos(angle)*r,
-0.8,
-Math.sin(angle)*r
-);
-
-label.rotation.y=-angle+Math.PI/2;
-
-scene.add(label);
-
 }
 
 // ======================
@@ -266,16 +260,15 @@ scene.add(label);
 
 function createPlayer(color){
 
-const geo=new THREE.SphereGeometry(0.7,32,32);
+const geo=new THREE.SphereGeometry(0.6,32,32);
 const mat=new THREE.MeshLambertMaterial({color});
 
-const player=new THREE.Mesh(geo,mat);
+const p=new THREE.Mesh(geo,mat);
+p.position.y=1;
 
-player.position.y=1;
+scene.add(p);
 
-scene.add(player);
-
-return player;
+return p;
 
 }
 
@@ -287,205 +280,103 @@ let positions=[0,0];
 updateTileHighlights();
 
 // ======================
-// ECONOMIA
-// ======================
-
-let money=[5000,5000];
-let salary=[1000,1000];
-let expenses=[800,800];
-let passive=[0,0];
-
-// ======================
 // DADO
 // ======================
 
+function createDiceMaterial(number){
+
+const canvas=document.createElement("canvas");
+canvas.width=256;
+canvas.height=256;
+
+const ctx=canvas.getContext("2d");
+
+ctx.fillStyle="white";
+ctx.fillRect(0,0,256,256);
+
+ctx.fillStyle="black";
+ctx.font="bold 160px Arial";
+ctx.textAlign="center";
+ctx.textBaseline="middle";
+
+ctx.fillText(number,128,140);
+
+return new THREE.MeshLambertMaterial({
+map:new THREE.CanvasTexture(canvas)
+});
+
+}
+
 const dice=new THREE.Mesh(
 new THREE.BoxGeometry(1,1,1),
-new THREE.MeshLambertMaterial({color:0xffffff})
+[
+createDiceMaterial(1),
+createDiceMaterial(2),
+createDiceMaterial(3),
+createDiceMaterial(4),
+createDiceMaterial(5),
+createDiceMaterial(6)
+]
 );
 
 dice.position.set(0,3,0);
 scene.add(dice);
 
-let currentPlayer=0;
-
-// ======================
-// DADO
-// ======================
-
-function rollDice(){
-
-const result=Math.floor(Math.random()*6)+1;
-
-movePlayer(result);
-
-}
-
 // ======================
 // MOVIMIENTO
 // ======================
 
-function movePlayer(steps){
+let currentPlayer=0;
 
-let stepCount=0;
+function rollDice(){
 
-function stepMove(){
-
-if(stepCount>=steps){
-
-resolveTile(positions[currentPlayer]);
-return;
+const result=Math.floor(Math.random()*6)+1;
+movePlayer(result);
 
 }
 
-stepCount++;
+function movePlayer(steps){
+
+let step=0;
+
+function next(){
+
+if(step>=steps) return;
+
+step++;
 
 positions[currentPlayer]=(positions[currentPlayer]+1)%tiles.length;
 
 const player=currentPlayer===0?player1:player2;
-
 const tile=tiles[positions[currentPlayer]];
 
-const startX=player.position.x;
-const startZ=player.position.z;
-
-const endX=tile.position.x;
-const endZ=tile.position.z;
-
-let p=0;
-
-function anim(){
-
-p+=0.08;
-
-player.position.x=startX+(endX-startX)*p;
-player.position.z=startZ+(endZ-startZ)*p;
-
-if(p<1){
-
-requestAnimationFrame(anim);
-
-}else{
+player.position.x=tile.position.x;
+player.position.z=tile.position.z;
 
 updateTileHighlights();
-setTimeout(stepMove,120);
+
+setTimeout(next,200);
 
 }
 
-}
-
-anim();
-
-}
-
-stepMove();
+next();
 
 }
 
 // ======================
-// EVENTOS
-// ======================
-
-function resolveTile(index){
-
-const type=tileTypes[index];
-
-if(type==="payday") money[currentPlayer]+=salary[currentPlayer];
-
-if(type==="smallDeal" && money[currentPlayer]>=1000){
-
-money[currentPlayer]-=1000;
-passive[currentPlayer]+=100;
-
-}
-
-if(type==="bigDeal" && money[currentPlayer]>=4000){
-
-money[currentPlayer]-=4000;
-passive[currentPlayer]+=500;
-
-}
-
-if(type==="market"){
-
-money[currentPlayer]+=Math.floor(Math.random()*1000)-500;
-
-}
-
-if(type==="doodad") money[currentPlayer]-=700;
-
-if(type==="charity"){
-
-money[currentPlayer]-=300;
-expenses[currentPlayer]-=50;
-
-}
-
-resolveTurn();
-
-}
-
-// ======================
-// FIN TURNO
-// ======================
-
-function resolveTurn(){
-
-money[currentPlayer]+=passive[currentPlayer];
-money[currentPlayer]-=expenses[currentPlayer];
-
-updateUI();
-switchTurn();
-
-}
-
-function aiTurn(){
-
-setTimeout(()=>rollDice(),1000);
-
-}
-
-function switchTurn(){
-
-currentPlayer=currentPlayer===0?1:0;
-
-turn.innerText=currentPlayer===0?"Jugador 1":"Jugador 2";
-
-if(currentPlayer===1) aiTurn();
-
-}
-
-// ======================
-// UI
-// ======================
-
-function updateUI(){
-
-money1.innerText=money[0];
-money2.innerText=money[1];
-
-passive1.innerText=passive[0];
-passive2.innerText=passive[1];
-
-expenses1.innerText=expenses[0];
-expenses2.innerText=expenses[1];
-
-}
-
-// ======================
-// HIGHLIGHT CASILLA
+// HIGHLIGHT
 // ======================
 
 function updateTileHighlights(){
 
 for(let i=0;i<tiles.length;i++){
 
-tiles[i].material.emissive.set(0x000000);
+tiles[i].children[0].material.emissive.set(0x000000);
 
 }
 
-tiles[positions[0]].material.emissive.set(0x00ff00);
-tiles[positions[1]].material.emissive.set(0xff0000);
+tiles[positions[0]].children[0].material.emissive.set(0x00ff00);
+tiles[positions[1]].children[0].material.emissive.set(0xff0000);
 
 }
 
