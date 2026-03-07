@@ -215,6 +215,51 @@ scene.add(tile);
 
 }
 
+
+function createDiceMaterial(number){
+
+const canvas = document.createElement("canvas");
+canvas.width = 256;
+canvas.height = 256;
+
+const ctx = canvas.getContext("2d");
+
+ctx.fillStyle = "white";
+ctx.fillRect(0,0,256,256);
+
+ctx.fillStyle = "black";
+ctx.font = "bold 160px Arial";
+ctx.textAlign = "center";
+ctx.textBaseline = "middle";
+
+ctx.fillText(number,128,140);
+
+const texture = new THREE.CanvasTexture(canvas);
+
+return new THREE.MeshStandardMaterial({map:texture});
+
+}
+
+
+const dice = new THREE.Mesh(
+
+new THREE.BoxGeometry(1.2,1.2,1.2),
+
+[
+createDiceMaterial(1),
+createDiceMaterial(2),
+createDiceMaterial(3),
+createDiceMaterial(4),
+createDiceMaterial(5),
+createDiceMaterial(6)
+
+]
+
+);
+
+dice.position.set(0,1.2,0);
+
+scene.add(dice);
 /* ======================
 LOOP
 ====================== */
@@ -222,6 +267,10 @@ LOOP
 function animate(){
 
 requestAnimationFrame(animate);
+
+dice.rotation.x += 0.01;
+dice.rotation.y += 0.01;
+
 renderer.render(scene,camera);
 
 }
