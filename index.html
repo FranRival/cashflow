@@ -53,7 +53,7 @@ font-size:16px;
 <script>
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x202020);
+scene.background = new THREE.Color(0xffffff);
 
 const camera = new THREE.PerspectiveCamera(
 60,
@@ -134,13 +134,15 @@ shape.lineTo(-widthFront/2, -length/2);
 
 const geometry = new THREE.ExtrudeGeometry(shape,{
 depth:height,
-bevelEnabled:false
+bevelEnabled:false,
+steps:1
 });
 
 geometry.rotateX(-Math.PI/2);
 
 /* CORRECCIÓN DEL PROBLEMA BICOLOR */
 
+geometry.deleteAttribute('normal');
 geometry.computeVertexNormals();
 
 return geometry;
@@ -170,6 +172,7 @@ tileWidth * 0.85,
 tileLength,
 0.5
 );
+geo.computeVertexNormals()
 
 /* TEXTURA CON NOMBRE */
 
@@ -199,7 +202,8 @@ texture.flipY=false;
 const mat = new THREE.MeshStandardMaterial({
 map:texture,
 emissive:0x000000,
-emissiveIntensity:0.7
+emissiveIntensity:0.7, 
+flatShading:true
 });
 
 
