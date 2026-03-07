@@ -262,14 +262,81 @@ return new THREE.MeshStandardMaterial({map:texture});
 }
 
 
+
 //girar dado
 function rollDice(){
+
+if(currentPlayer !== 0) return;
 
 const result = Math.floor(Math.random()*6)+1;
 
 console.log("Turno Jugador", currentPlayer+1, "Resultado dado:",result);
 
 movePlayer(result);
+
+}
+
+
+// IA
+function aiTurn(){
+
+setTimeout(()=>{
+
+const result = Math.floor(Math.random()*6)+1;
+
+console.log("IA sacó:", result);
+
+movePlayer(result);
+
+},800);
+
+}
+
+
+// cambio de turno
+function switchTurn(){
+
+currentPlayer = currentPlayer === 0 ? 1 : 0;
+
+console.log("Turno jugador", currentPlayer + 1);
+
+if(currentPlayer === 1){
+
+aiTurn();
+
+}
+
+}
+
+
+// IA
+function aiTurn(){
+
+setTimeout(()=>{
+
+const result = Math.floor(Math.random()*6)+1;
+
+console.log("IA sacó:", result);
+
+movePlayer(result);
+
+},800);
+
+}
+
+
+// cambio de turno
+function switchTurn(){
+
+currentPlayer = currentPlayer === 0 ? 1 : 0;
+
+console.log("Turno jugador", currentPlayer + 1);
+
+if(currentPlayer === 1){
+
+aiTurn();
+
+}
 
 }
 
