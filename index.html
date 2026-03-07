@@ -10,10 +10,27 @@ margin:0;
 overflow:hidden;
 background:white;
 }
+
+
 </style>
 
 </head>
 <body>
+<div style="
+position:absolute;
+top:20px;
+left:20px;
+background:rgba(0,0,0,0.6);
+padding:10px;
+border-radius:8px;
+color:white;
+">
+
+<button onclick="rollDice()">Lanzar dado</button>
+
+</div>
+
+<button onclick="rollDice()">Lanzar dado</button>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
@@ -43,6 +60,8 @@ camera.lookAt(0,0,0);
 let cameraAngle = 0;
 let cameraRadius = 15;
 let cameraHeight = 8;
+
+let currentPlayer = 0;
 
 window.addEventListener("mousemove",(e)=>{
 
@@ -243,6 +262,58 @@ return new THREE.MeshStandardMaterial({map:texture});
 
 }
 
+
+//girar dado
+function rollDice(){
+
+const result = Math.floor(Math.random()*6)+1;
+
+console.log("Resultado dado:",result);
+
+movePlayer(result);
+
+}
+
+function switchTurn(){
+
+currentPlayer = currentPlayer === 0 ? 1 : 0;
+
+}
+
+//mover jugador 
+function movePlayer(steps){
+
+let step = 0;
+
+function nextStep(){
+
+if(step >= steps){
+
+switchTurn();
+return;
+
+}
+
+step++;
+
+positions[currentPlayer] =
+(positions[currentPlayer] + 1) % tiles.length;
+
+const player =
+currentPlayer === 0 ? player1 : player2;
+
+const tile = tiles[positions[currentPlayer]];
+
+player.position.x = tile.position.x;
+player.position.z = tile.position.z;
+
+setTimeout(nextStep,200);
+
+}
+
+nextStep();
+
+}
 
 const dice = new THREE.Mesh(
 
