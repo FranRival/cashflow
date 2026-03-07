@@ -8,7 +8,7 @@
 body{
 margin:0;
 overflow:hidden;
-background:#111;
+background:#ffffff;
 font-family:Arial;
 }
 
@@ -52,8 +52,11 @@ font-size:16px;
 
 <script>
 
+// ======================
+// ESCENA
+// ======================
+
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xffffff);
 
 const camera = new THREE.PerspectiveCamera(
 60,
@@ -62,16 +65,16 @@ window.innerWidth/window.innerHeight,
 1000
 );
 
-let cameraAngle=0;
 let cameraRadius=15;
 let cameraHeight=5;
+let cameraAngle=0;
 
 camera.position.set(0,cameraHeight,cameraRadius);
 camera.lookAt(0,0,0);
 
 window.addEventListener("mousemove",(e)=>{
 
-cameraAngle=(e.clientX/window.innerWidth) * Math.PI*2;
+cameraAngle=(e.clientX/window.innerWidth)*Math.PI*2;
 
 camera.position.x=Math.cos(cameraAngle)*cameraRadius;
 camera.position.z=Math.sin(cameraAngle)*cameraRadius;
@@ -81,32 +84,48 @@ camera.lookAt(0,0,0);
 
 });
 
+// ======================
+// RENDERER
+// ======================
+
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(window.innerWidth,window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const light=new THREE.DirectionalLight(0xffffff,1);
-light.position.set(10,20,10);
-scene.add(light);
+// ======================
+// LUCES
+// ======================
 
-scene.add(new THREE.AmbientLight(0xffffff,0.5));
+scene.add(new THREE.AmbientLight(0xffffff,0.9));
+
+const dirLight=new THREE.DirectionalLight(0xffffff,0.4);
+dirLight.position.set(10,20,10);
+scene.add(dirLight);
+
+// ======================
+// COLORES CASILLAS
+// ======================
 
 function tileColor(type){
 
 switch(type){
 
-case "payday": return "#2ecc71";
-case "smallDeal": return "#3498db";
-case "bigDeal": return "#9b59b6";
-case "market": return "#f1c40f";
-case "charity": return "#ffffff";
-case "doodad": return "#e74c3c";
+case "payday": return 0x2ecc71;
+case "smallDeal": return 0x3498db;
+case "bigDeal": return 0x9b59b6;
+case "market": return 0xf1c40f;
+case "charity": return 0xffffff;
+case "doodad": return 0xe74c3c;
 
-default: return "#555555";
+default: return 0x555555;
+
+}
 
 }
 
-}
+// ======================
+// RANDOM TIPO
+// ======================
 
 function randomTileType(){
 
@@ -122,108 +141,133 @@ return "charity";
 
 }
 
-function createTrapezoidGeometry(widthFront,widthBack,length,height){
+// ======================
+// GEOMETRIA TRAPECIO
+// ======================
 
-const shape = new THREE.Shape();
+function createTrapezoid(w1,w2,length,height){
 
-shape.moveTo(-widthFront/2, -length/2);
-shape.lineTo(widthFront/2, -length/2);
-shape.lineTo(widthBack/2, length/2);
-shape.lineTo(-widthBack/2, length/2);
-shape.lineTo(-widthFront/2, -length/2);
+const shape=new THREE.Shape();
 
-const geometry = new THREE.ExtrudeGeometry(shape,{
+shape.moveTo(-w1/2,0);
+shape.lineTo(w1/2,0);
+shape.lineTo(w2/2,length);
+shape.lineTo(-w2/2,length);
+shape.closePath();
+
+const geo=new THREE.ExtrudeGeometry(shape,{
 depth:height,
-bevelEnabled:false,
-steps:1
+bevelEnabled:false
 });
 
-geometry.rotateX(-Math.PI/2);
+geo.rotateX(-Math.PI/2);
 
-/* CORRECCIÓN DEL PROBLEMA BICOLOR */
-
-geometry.deleteAttribute('normal');
-geometry.computeVertexNormals();
-
-return geometry;
+return geo;
 
 }
+
+// ======================
+// TEXTO EXTERIOR
+// ======================
+
+function createLabel(text){
+
+const canvas=document.createElement("canvas");
+canvas.width=256;
+canvas.height=128;
+
+const ctx=canvas.getContext("2d");
+
+ctx.fillStyle="#ffffff";
+ctx.fillRect(0,0,256,128);
+
+ctx.fillStyle="#000000";
+ctx.font="bold 36px Arial";
+ctx.textAlign="center";
+ctx.textBaseline="middle";
+
+ctx.fillText(text.toUpperCase(),128,64);
+
+const texture=new THREE.CanvasTexture(canvas);
+
+const mat=new THREE.MeshBasicMaterial({map:texture,transparent:true});
+
+const geo=new THREE.PlaneGeometry(2.5,1);
+
+return new THREE.Mesh(geo,mat);
+
+}
+
+// ======================
+// TABLERO
+// ======================
 
 const tiles=[];
 const tileTypes=[];
 
-const tileWidth = 1.6
-const tileLength = 3.2
-const radius = 8;
-const tileCount = 24;
+const tileCount=24;
+const radius=8;
+
+const tileWidth=1.6;
+const tileLength=3;
 
 for(let i=0;i<tileCount;i++){
 
-const angle = (i / tileCount) * Math.PI * 2;
+const angle=i/tileCount*Math.PI*2;
 
-const x = Math.cos(angle) * radius;
-const z = Math.sin(angle) * radius;
+const type=randomTileType();
 
-const type = randomTileType();
-
-const geo = createTrapezoidGeometry(
-tileWidth * 1.15,
-tileWidth * 0.85,
+const geo=createTrapezoid(
+tileWidth*1.2,
+tileWidth*0.8,
 tileLength,
 0.5
 );
-geo.computeVertexNormals()
 
-/* TEXTURA CON NOMBRE */
-
-const canvas=document.createElement("canvas");
-canvas.width=512;
-canvas.height=256;
-
-const ctx=canvas.getContext("2d");
-
-ctx.fillStyle=tileColor(type);
-ctx.fillRect(0,0,512,256);
-
-ctx.strokeStyle="black";
-ctx.lineWidth=8;
-ctx.strokeRect(0,0,512,256);
-
-ctx.fillStyle="black";
-ctx.font="bold 80px Arial";
-ctx.textAlign="center";
-ctx.textBaseline="middle";
-
-ctx.fillText(type.toUpperCase(),256,190);
-
-const texture=new THREE.CanvasTexture(canvas);
-texture.flipY=false;
-
-const mat = new THREE.MeshStandardMaterial({
-map:texture,
-emissive:0x000000,
-emissiveIntensity:0.7, 
-flatShading:true
+const mat=new THREE.MeshLambertMaterial({
+color:tileColor(type),
+emissive:0x000000
 });
 
+const tile=new THREE.Mesh(geo,mat);
 
-
-const tile = new THREE.Mesh(geo,mat);
+const x=Math.cos(angle)*radius;
+const z=Math.sin(angle)*radius;
 
 tile.position.set(x,0,z);
-tile.rotation.y = -angle + Math.PI/2;
+tile.rotation.y=-angle+Math.PI/2;
 
 scene.add(tile);
 
 tiles.push(tile);
 tileTypes.push(type);
 
+// TEXTO EXTERIOR
+
+const label=createLabel(type);
+
+const r=radius+tileLength*0.55;
+
+label.position.set(
+Math.cos(angle)*r,
+0.8,
+Math.sin(angle)*r
+);
+
+label.rotation.y=-angle+Math.PI/2;
+
+scene.add(label);
+
 }
+
+// ======================
+// JUGADORES
+// ======================
 
 function createPlayer(color){
 
 const geo=new THREE.SphereGeometry(0.7,32,32);
-const mat=new THREE.MeshStandardMaterial({color});
+const mat=new THREE.MeshLambertMaterial({color});
 
 const player=new THREE.Mesh(geo,mat);
 
@@ -239,47 +283,25 @@ const player1=createPlayer(0x00ff00);
 const player2=createPlayer(0xff4444);
 
 let positions=[0,0];
-updateTileHighlights()
+
+updateTileHighlights();
+
+// ======================
+// ECONOMIA
+// ======================
 
 let money=[5000,5000];
 let salary=[1000,1000];
 let expenses=[800,800];
 let passive=[0,0];
 
-function createDiceMaterial(number){
-
-const canvas=document.createElement("canvas");
-canvas.width=256;
-canvas.height=256;
-
-const ctx=canvas.getContext("2d");
-
-ctx.fillStyle="white";
-ctx.fillRect(0,0,256,256);
-
-ctx.fillStyle="black";
-ctx.font="bold 160px Arial";
-ctx.textAlign="center";
-ctx.textBaseline="middle";
-
-ctx.fillText(number,128,140);
-
-const texture=new THREE.CanvasTexture(canvas);
-
-return new THREE.MeshStandardMaterial({map:texture});
-
-}
+// ======================
+// DADO
+// ======================
 
 const dice=new THREE.Mesh(
 new THREE.BoxGeometry(1,1,1),
-[
-createDiceMaterial(1),
-createDiceMaterial(2),
-createDiceMaterial(3),
-createDiceMaterial(4),
-createDiceMaterial(5),
-createDiceMaterial(6)
-]
+new THREE.MeshLambertMaterial({color:0xffffff})
 );
 
 dice.position.set(0,3,0);
@@ -287,39 +309,21 @@ scene.add(dice);
 
 let currentPlayer=0;
 
+// ======================
+// DADO
+// ======================
+
 function rollDice(){
 
 const result=Math.floor(Math.random()*6)+1;
-animateDice(result);
-
-}
-
-function animateDice(result){
-
-let frames=0;
-
-function spin(){
-
-dice.rotation.x+=0.25;
-dice.rotation.y+=0.25;
-
-frames++;
-
-if(frames<25){
-
-requestAnimationFrame(spin);
-
-}else{
 
 movePlayer(result);
 
 }
 
-}
-
-spin();
-
-}
+// ======================
+// MOVIMIENTO
+// ======================
 
 function movePlayer(steps){
 
@@ -378,6 +382,10 @@ stepMove();
 
 }
 
+// ======================
+// EVENTOS
+// ======================
+
 function resolveTile(index){
 
 const type=tileTypes[index];
@@ -417,6 +425,10 @@ resolveTurn();
 
 }
 
+// ======================
+// FIN TURNO
+// ======================
+
 function resolveTurn(){
 
 money[currentPlayer]+=passive[currentPlayer];
@@ -443,6 +455,10 @@ if(currentPlayer===1) aiTurn();
 
 }
 
+// ======================
+// UI
+// ======================
+
 function updateUI(){
 
 money1.innerText=money[0];
@@ -456,6 +472,10 @@ expenses2.innerText=expenses[1];
 
 }
 
+// ======================
+// HIGHLIGHT CASILLA
+// ======================
+
 function updateTileHighlights(){
 
 for(let i=0;i<tiles.length;i++){
@@ -468,6 +488,10 @@ tiles[positions[0]].material.emissive.set(0x00ff00);
 tiles[positions[1]].material.emissive.set(0xff0000);
 
 }
+
+// ======================
+// LOOP
+// ======================
 
 function animate(){
 
