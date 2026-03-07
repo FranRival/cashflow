@@ -187,15 +187,18 @@ ctx.font="bold 80px Arial";
 ctx.textAlign="center";
 ctx.textBaseline="middle";
 
-ctx.fillText(type.toUpperCase(),256,60);
+ctx.fillText(type.toUpperCase(),256,190);
 
 const texture=new THREE.CanvasTexture(canvas);
+texture.flipY=false;
 
 const mat = new THREE.MeshStandardMaterial({
 map:texture,
 emissive:0x000000,
 emissiveIntensity:0.7
 });
+
+
 
 const tile = new THREE.Mesh(geo,mat);
 
