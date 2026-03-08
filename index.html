@@ -166,8 +166,9 @@ color:tileColor(type)
 });
 
 const body = new THREE.Mesh(geometry,material);
-
 group.add(body);
+
+group.body = body;
 
 /* TEXTO */
 
@@ -228,6 +229,22 @@ scene.add(tile);
 tiles.push(tile);
 
 }
+
+
+//iluminacion de casilla 
+function updateTileHighlights(){
+
+for(let i=0;i<tiles.length;i++){
+
+tiles[i].body.material.emissive.set(0x000000);
+
+}
+
+tiles[positions[0]].body.material.emissive.set(0x00ff00);
+tiles[positions[1]].body.material.emissive.set(0xff0000);
+
+}
+
 
 /* ======================
 DADO
@@ -315,6 +332,7 @@ player2.position.z=tile.position.z;
 }
 
 placePlayers();
+updateTileHighlights();
 
 /* ======================
 TURNOS
@@ -380,11 +398,11 @@ MOVIMIENTO
 
 function movePlayer(steps){
 
-let step=0;
+let step = 0;
 
-function nextStep(){
+function stepMove(){
 
-if(step>=steps){
+if(step >= steps){
 
 switchTurn();
 return;
@@ -393,20 +411,52 @@ return;
 
 step++;
 
-positions[currentPlayer]=(positions[currentPlayer]+1)%tiles.length;
+positions[currentPlayer] =
+(positions[currentPlayer] + 1) % tiles.length;
 
-const player=currentPlayer===0?player1:player2;
+const player =
+currentPlayer === 0 ? player1 : player2;
 
-const tile=tiles[positions[currentPlayer]];
+const tile = tiles[positions[currentPlayer]];
 
-player.position.x=tile.position.x;
-player.position.z=tile.position.z;
+const startX = player.position.x;
+const startZ = player.position.z;
 
-setTimeout(nextStep,200);
+const endX = tile.position.x;
+const endZ = tile.position.z;
+
+let progress = 0;
+
+function animateMove(){
+
+progress += 0.05;
+
+player.position.x =
+startX + (endX - startX) * progress;
+
+player.position.z =
+startZ + (endZ - startZ) * progress;
+
+
+
+if(progress < 1){
+
+requestAnimationFrame(animateMove);
+
+}else{
+
+updateTileHighlights()
+setTimeout(stepMove,120);
 
 }
 
-nextStep();
+}
+
+animateMove();
+
+}
+
+stepMove();
 
 }
 
