@@ -34,6 +34,30 @@ font-size:16px;
 
 <div id="ui">
 <button onclick="rollDice()">Lanzar dado</button>
+<div id="ui" style="
+position:absolute;
+top:20px;
+right:20px;
+background:rgba(0,0,0,0.6);
+padding:12px;
+border-radius:8px;
+color:white;
+font-family:Arial;
+">
+
+<div>Jugador 1</div>
+Dinero: $<span id="money1">5000</span><br>
+Pasivo: $<span id="passive1">0</span><br>
+Gastos: $<span id="expenses1">800</span>
+
+<br><br>
+
+<div>Jugador 2</div>
+Dinero: $<span id="money2">5000</span><br>
+Pasivo: $<span id="passive2">0</span><br>
+Gastos: $<span id="expenses2">800</span>
+
+</div>
 </div>
 
 
@@ -442,6 +466,11 @@ const player2=createPlayer(0xff4444);
 
 let positions=[0,0];
 
+let money = [5000,5000];
+let passive = [0,0];
+let salary = [1000,1000];
+let expenses = [800,800];
+
 function placePlayers(){
 
 const tile=tiles[0];
@@ -456,6 +485,67 @@ player2.position.z=tile.position.z;
 
 placePlayers();
 updateTileHighlights();
+
+
+//hoja de balances
+function updateUI(){
+
+money1.innerText = money[0];
+money2.innerText = money[1];
+
+passive1.innerText = passive[0];
+passive2.innerText = passive[1];
+
+expenses1.innerText = expenses[0];
+expenses2.innerText = expenses[1];
+
+}
+
+function resolveTile(index){
+
+const type = tileTypes[index];
+
+if(type === "payday"){
+
+money[currentPlayer] += salary[currentPlayer];
+
+}
+
+if(type === "smallDeal" && money[currentPlayer] >= 1000){
+
+money[currentPlayer] -= 1000;
+passive[currentPlayer] += 100;
+
+}
+
+if(type === "bigDeal" && money[currentPlayer] >= 4000){
+
+money[currentPlayer] -= 4000;
+passive[currentPlayer] += 500;
+
+}
+
+if(type === "market"){
+
+money[currentPlayer] += Math.floor(Math.random()*1000) - 500;
+
+}
+
+if(type === "doodad"){
+
+money[currentPlayer] -= 700;
+
+}
+
+if(type === "charity"){
+
+money[currentPlayer] -= 300;
+expenses[currentPlayer] -= 50;
+
+}
+
+}
+
 
 /* ======================
 TURNOS
@@ -525,7 +615,15 @@ let step = 0;
 
 function stepMove(){
 
+
 if(step >= steps){
+
+resolveTile(positions[currentPlayer]);
+
+money[currentPlayer] += passive[currentPlayer];
+money[currentPlayer] -= expenses[currentPlayer];
+
+updateUI();
 
 switchTurn();
 return;
