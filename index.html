@@ -5,6 +5,7 @@
 <title>Trapecios Cashflow</title>
 
 <style>
+
 body{
 margin:0;
 overflow:hidden;
@@ -17,7 +18,7 @@ position:absolute;
 top:20px;
 left:20px;
 background:rgba(0,0,0,0.6);
-padding:10px;
+padding:12px;
 border-radius:8px;
 color:white;
 }
@@ -26,13 +27,14 @@ button{
 padding:10px;
 font-size:16px;
 }
-</style>
 
+</style>
 </head>
 
 <body>
 
 <div id="ui">
+
 <button onclick="rollDice()">Lanzar dado</button>
 
 <hr>
@@ -42,9 +44,9 @@ Dinero: $<span id="money1">5000</span><br>
 Ingreso Pasivo: $<span id="passive1">0</span><br>
 Salario: $<span id="salary1">1000</span><br>
 Gastos: $<span id="expenses1">800</span><br>
-Flujo de Caja: $<span id="cashflow1">200</span><br>
+Flujo de Caja: $<span id="cashflow1">200</span>
 
-<br>
+<br><br>
 
 <b>Jugador 2</b><br>
 Dinero: $<span id="money2">5000</span><br>
@@ -55,13 +57,12 @@ Flujo de Caja: $<span id="cashflow2">200</span>
 
 </div>
 
-
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
 <script>
 
 /* ======================
-ESCENA - hingas a tu madre
+ESCENA
 ====================== */
 
 const scene = new THREE.Scene();
@@ -116,7 +117,7 @@ light.position.set(10,20,10);
 scene.add(light);
 
 /* ======================
-COLORES
+COLORES CASILLAS
 ====================== */
 
 function tileColor(type){
@@ -137,7 +138,7 @@ default: return 0x888888;
 }
 
 /* ======================
-TIPO RANDOM
+TIPO CASILLA RANDOM
 ====================== */
 
 function randomTileType(){
@@ -186,8 +187,8 @@ color:tileColor(type)
 });
 
 const body = new THREE.Mesh(geometry,material);
-group.add(body);
 
+group.add(body);
 group.body = body;
 
 /* TEXTO */
@@ -231,6 +232,7 @@ const tileCount = 24;
 const radius = 6.2;
 
 const tiles = [];
+const tileTypes = [];
 
 for(let i=0;i<tileCount;i++){
 
@@ -246,12 +248,16 @@ tile.position.z = Math.sin(angle)*radius;
 tile.rotation.y = -angle + Math.PI/2;
 
 scene.add(tile);
+
 tiles.push(tile);
+tileTypes.push(type);
 
 }
 
+/* ======================
+ILUMINACION CASILLAS
+====================== */
 
-//iluminacion de casilla 
 function updateTileHighlights(){
 
 for(let i=0;i<tiles.length;i++){
@@ -264,7 +270,6 @@ tiles[positions[0]].body.material.emissive.set(0x00ff00);
 tiles[positions[1]].body.material.emissive.set(0xff0000);
 
 }
-
 
 /* ======================
 DADO
@@ -294,100 +299,6 @@ return new THREE.MeshStandardMaterial({map:texture});
 
 }
 
-
-
-//girar dado
-function rollDice(){
-
-if(currentPlayer !== 0) return;
-
-const result = Math.floor(Math.random()*6)+1;
-
-console.log("Turno Jugador", currentPlayer+1, "Resultado dado:",result);
-
-movePlayer(result);
-
-}
-
-
-
-
-// cambio de turno
-function switchTurn(){
-
-currentPlayer = currentPlayer === 0 ? 1 : 0;
-
-console.log("Turno jugador", currentPlayer + 1);
-
-if(currentPlayer === 1){
-
-aiTurn();
-
-}
-
-}
-
-
-// IA
-function aiTurn(){
-
-setTimeout(()=>{
-
-const result = Math.floor(Math.random()*6)+1;
-
-console.log("IA sacó:", result);
-
-movePlayer(result);
-
-},800);
-
-}
-
-
-
-function switchTurn(){
-
-currentPlayer = currentPlayer === 0 ? 1 : 0;
-console.log("Nuevo turno jugador", currentPlayer+1);
-
-
-}
-
-//mover jugador 
-function movePlayer(steps){
-
-let step = 0;
-
-function nextStep(){
-
-if(step >= steps){
-
-switchTurn();
-return;
-
-}
-
-step++;
-
-positions[currentPlayer] =
-(positions[currentPlayer] + 1) % tiles.length;
-
-const player =
-currentPlayer === 0 ? player1 : player2;
-
-const tile = tiles[positions[currentPlayer]];
-
-player.position.x = tile.position.x;
-player.position.z = tile.position.z;
-
-setTimeout(nextStep,200);
-
-}
-
-nextStep();
-
-}
-
 const dice = new THREE.Mesh(
 
 new THREE.BoxGeometry(1.2,1.2,1.2),
@@ -399,7 +310,6 @@ createDiceMaterial(3),
 createDiceMaterial(4),
 createDiceMaterial(5),
 createDiceMaterial(6)
-
 ]
 
 );
@@ -415,7 +325,6 @@ JUGADORES
 function createPlayer(color){
 
 const geo=new THREE.SphereGeometry(0.5,32,32);
-
 const mat=new THREE.MeshStandardMaterial({color});
 
 const player=new THREE.Mesh(geo,mat);
@@ -433,29 +342,15 @@ const player2=createPlayer(0xff4444);
 
 let positions=[0,0];
 
-let money = [5000,5000];
-let passive = [0,0];
-let salary = [1000,1000];
-let expenses = [800,800];
+/* ======================
+ECONOMIA
+====================== */
 
-function placePlayers(){
+let money=[5000,5000];
+let passive=[0,0];
+let salary=[1000,1000];
+let expenses=[800,800];
 
-const tile=tiles[0];
-
-player1.position.x=tile.position.x;
-player1.position.z=tile.position.z;
-
-player2.position.x=tile.position.x+0.6;
-player2.position.z=tile.position.z;
-
-}
-
-placePlayers();
-updateTileHighlights();
-updateUI();
-
-
-//hoja de balances
 function updateUI(){
 
 money1.innerText = money[0];
@@ -473,56 +368,51 @@ expenses2.innerText = expenses[1];
 const cashflow1 = salary[0] + passive[0] - expenses[0];
 const cashflow2 = salary[1] + passive[1] - expenses[1];
 
-document.getElementById("cashflow1").innerText = cashflow1;
-document.getElementById("cashflow2").innerText = cashflow2;
+cashflow1.innerText = cashflow1;
+cashflow2.innerText = cashflow2;
 
 }
+
+/* ======================
+EVENTO CASILLA
+====================== */
 
 function resolveTile(index){
 
 const type = tileTypes[index];
 
-if(type === "payday"){
+if(type==="payday") money[currentPlayer]+=salary[currentPlayer];
 
-money[currentPlayer] += salary[currentPlayer];
+if(type==="smallDeal" && money[currentPlayer]>=1000){
 
-}
-
-if(type === "smallDeal" && money[currentPlayer] >= 1000){
-
-money[currentPlayer] -= 1000;
-passive[currentPlayer] += 100;
+money[currentPlayer]-=1000;
+passive[currentPlayer]+=100;
 
 }
 
-if(type === "bigDeal" && money[currentPlayer] >= 4000){
+if(type==="bigDeal" && money[currentPlayer]>=4000){
 
-money[currentPlayer] -= 4000;
-passive[currentPlayer] += 500;
-
-}
-
-if(type === "market"){
-
-money[currentPlayer] += Math.floor(Math.random()*1000) - 500;
+money[currentPlayer]-=4000;
+passive[currentPlayer]+=500;
 
 }
 
-if(type === "doodad"){
+if(type==="market"){
 
-money[currentPlayer] -= 700;
+money[currentPlayer]+=Math.floor(Math.random()*1000)-500;
 
 }
 
-if(type === "charity"){
+if(type==="doodad") money[currentPlayer]-=700;
 
-money[currentPlayer] -= 300;
-expenses[currentPlayer] -= 50;
+if(type==="charity"){
+
+money[currentPlayer]-=300;
+expenses[currentPlayer]-=50;
 
 }
 
 }
-
 
 /* ======================
 TURNOS
@@ -540,8 +430,6 @@ if(currentPlayer!==0) return;
 
 const result=Math.floor(Math.random()*6)+1;
 
-console.log("Jugador sacó:",result);
-
 movePlayer(result);
 
 }
@@ -555,8 +443,6 @@ function aiTurn(){
 setTimeout(()=>{
 
 const result=Math.floor(Math.random()*6)+1;
-
-console.log("IA sacó:",result);
 
 movePlayer(result);
 
@@ -572,8 +458,6 @@ function switchTurn(){
 
 currentPlayer=currentPlayer===0?1:0;
 
-console.log("Turno jugador",currentPlayer+1);
-
 if(currentPlayer===1){
 
 aiTurn();
@@ -588,17 +472,16 @@ MOVIMIENTO
 
 function movePlayer(steps){
 
-let step = 0;
+let step=0;
 
 function stepMove(){
 
-
-if(step >= steps){
+if(step>=steps){
 
 resolveTile(positions[currentPlayer]);
 
-money[currentPlayer] += passive[currentPlayer];
-money[currentPlayer] -= expenses[currentPlayer];
+money[currentPlayer]+=passive[currentPlayer];
+money[currentPlayer]-=expenses[currentPlayer];
 
 updateUI();
 
@@ -609,41 +492,34 @@ return;
 
 step++;
 
-positions[currentPlayer] =
-(positions[currentPlayer] + 1) % tiles.length;
+positions[currentPlayer]=(positions[currentPlayer]+1)%tiles.length;
 
-const player =
-currentPlayer === 0 ? player1 : player2;
+const player=currentPlayer===0?player1:player2;
 
-const tile = tiles[positions[currentPlayer]];
+const tile=tiles[positions[currentPlayer]];
 
-const startX = player.position.x;
-const startZ = player.position.z;
+const startX=player.position.x;
+const startZ=player.position.z;
 
-const endX = tile.position.x;
-const endZ = tile.position.z;
+const endX=tile.position.x;
+const endZ=tile.position.z;
 
-let progress = 0;
+let progress=0;
 
 function animateMove(){
 
-progress += 0.05;
+progress+=0.05;
 
-player.position.x =
-startX + (endX - startX) * progress;
+player.position.x=startX+(endX-startX)*progress;
+player.position.z=startZ+(endZ-startZ)*progress;
 
-player.position.z =
-startZ + (endZ - startZ) * progress;
-
-
-
-if(progress < 1){
+if(progress<1){
 
 requestAnimationFrame(animateMove);
 
 }else{
 
-updateTileHighlights()
+updateTileHighlights();
 setTimeout(stepMove,120);
 
 }
@@ -657,6 +533,26 @@ animateMove();
 stepMove();
 
 }
+
+/* ======================
+POSICION INICIAL
+====================== */
+
+function placePlayers(){
+
+const tile=tiles[0];
+
+player1.position.x=tile.position.x;
+player1.position.z=tile.position.z;
+
+player2.position.x=tile.position.x+0.6;
+player2.position.z=tile.position.z;
+
+}
+
+placePlayers();
+updateTileHighlights();
+updateUI();
 
 /* ======================
 LOOP
