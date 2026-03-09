@@ -440,15 +440,133 @@ card.style.display="none";
 
 /* EVENTO CASILLA */
 
+
 function resolveTile(index){
 
 const type = tileTypes[index];
 
-if(type==="payday"){
+/* PAYDAY */
 
-money[currentPlayer]+=income[currentPlayer].salary;
+if(type === "payday"){
 
-showCard("PAYDAY","Recibes tu salario");
+money[currentPlayer] += income[currentPlayer].salary;
+
+showCard(
+"PAYDAY",
+`Recibes tu salario de $${income[currentPlayer].salary}`
+);
+
+}
+
+/* SMALL DEAL */
+
+if(type === "smallDeal"){
+
+const deal =
+smallDeals[Math.floor(Math.random()*smallDeals.length)];
+
+showCard(
+"SMALL DEAL",
+`
+Activo: ${deal.title}<br>
+Costo: $${deal.cost}<br>
+Flujo de caja: $${deal.cashflow}
+`
+);
+
+if(money[currentPlayer] >= deal.cost){
+
+money[currentPlayer] -= deal.cost;
+income[currentPlayer].realEstate += deal.cashflow;
+
+}
+
+}
+
+/* BIG DEAL */
+
+if(type === "bigDeal"){
+
+const deal =
+bigDeals[Math.floor(Math.random()*bigDeals.length)];
+
+showCard(
+"BIG DEAL",
+`
+Activo: ${deal.title}<br>
+Costo: $${deal.cost}<br>
+Flujo de caja: $${deal.cashflow}
+`
+);
+
+if(money[currentPlayer] >= deal.cost){
+
+money[currentPlayer] -= deal.cost;
+income[currentPlayer].business += deal.cashflow;
+
+}
+
+}
+
+/* MARKET */
+
+if(type === "market"){
+
+const event =
+marketCards[Math.floor(Math.random()*marketCards.length)];
+
+showCard(
+"MARKET",
+event.title
+);
+
+if(event.effect === "realEstateDouble"){
+
+income[currentPlayer].realEstate *= 2;
+
+}
+
+if(event.effect === "realEstateHalf"){
+
+income[currentPlayer].realEstate *= 0.5;
+
+}
+
+}
+
+/* DOODAD */
+
+if(type === "doodad"){
+
+const cost = 700;
+
+money[currentPlayer] =
+Math.max(0, money[currentPlayer] - cost);
+
+showCard(
+"DOODAD",
+`Gasto inesperado de $${cost}`
+);
+
+}
+
+/* CHARITY */
+
+if(type === "charity"){
+
+const cost = 300;
+
+money[currentPlayer] =
+Math.max(0, money[currentPlayer] - cost);
+
+showCard(
+"CHARITY",
+`Donación de $${cost}<br>
+Tus gastos se reducen`
+);
+
+expenses[currentPlayer].other =
+Math.max(0, expenses[currentPlayer].other - 50);
 
 }
 
