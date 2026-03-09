@@ -40,20 +40,34 @@ font-size:16px;
 <hr>
 
 <b>Jugador 1</b><br>
-Dinero: $<span id="money1">5000</span><br>
-Ingreso Pasivo: $<span id="passive1">0</span><br>
-Salario: $<span id="salary1">1000</span><br>
-Gastos: $<span id="expenses1">800</span><br>
-Flujo de Caja: $<span id="cashflow1">200</span>
+
+INGRESOS<br>
+Salario: $<span id="salary1"></span><br>
+Bienes raíces: $<span id="realestate1"></span><br>
+Intereses: $<span id="interest1"></span><br>
+Dividendos: $<span id="dividends1"></span><br>
+Negocios: $<span id="business1"></span><br>
+Otros activos: $<span id="otherassets1"></span><br>
+
+Total ingresos: $<span id="incomeTotal1"></span>
 
 <br><br>
 
-<b>Jugador 2</b><br>
-Dinero: $<span id="money2">5000</span><br>
-Ingreso Pasivo: $<span id="passive2">0</span><br>
-Salario: $<span id="salary2">1000</span><br>
-Gastos: $<span id="expenses2">800</span><br>
-Flujo de Caja: $<span id="cashflow2">200</span>
+GASTOS<br>
+Impuestos: $<span id="tax1"></span><br>
+Hipoteca: $<span id="mortgage1"></span><br>
+Préstamo escolar: $<span id="school1"></span><br>
+Auto: $<span id="car1"></span><br>
+Tarjeta crédito: $<span id="credit1"></span><br>
+Pagos menores: $<span id="retail1"></span><br>
+Otros: $<span id="other1"></span><br>
+Hijos: $<span id="children1"></span><br>
+
+Total gastos: $<span id="expenseTotal1"></span>
+
+<br><br>
+
+Flujo de caja: $<span id="cashflow1"></span>
 
 </div>
 
@@ -347,29 +361,99 @@ ECONOMIA
 ====================== */
 
 let money=[5000,5000];
-let passive=[0,0];
-let salary=[1000,1000];
-let expenses=[800,800];
+
+let income = [
+{
+salary:1000,
+realEstate:0,
+interest:0,
+dividends:0,
+business:0,
+otherAssets:0
+},
+{
+salary:1000,
+realEstate:0,
+interest:0,
+dividends:0,
+business:0,
+otherAssets:0
+}
+];
+
+let expenses = [
+{
+tax:200,
+mortgage:200,
+schoolLoan:100,
+carLoan:100,
+creditCard:100,
+retail:50,
+other:50,
+children:0
+},
+{
+tax:200,
+mortgage:200,
+schoolLoan:100,
+carLoan:100,
+creditCard:100,
+retail:50,
+other:50,
+children:0
+}
+];
 
 function updateUI(){
 
-money1.innerText = money[0];
-money2.innerText = money[1];
+for(let p=0;p<1;p++){
 
-passive1.innerText = passive[0];
-passive2.innerText = passive[1];
+const inc = income[p];
+const exp = expenses[p];
 
-salary1.innerText = salary[0];
-salary2.innerText = salary[1];
+const incomeTotal =
+inc.salary +
+inc.realEstate +
+inc.interest +
+inc.dividends +
+inc.business +
+inc.otherAssets;
 
-expenses1.innerText = expenses[0];
-expenses2.innerText = expenses[1];
+const expenseTotal =
+exp.tax +
+exp.mortgage +
+exp.schoolLoan +
+exp.carLoan +
+exp.creditCard +
+exp.retail +
+exp.other +
+exp.children;
 
-const cashflow1 = salary[0] + passive[0] - expenses[0];
-const cashflow2 = salary[1] + passive[1] - expenses[1];
+const cashflow = incomeTotal - expenseTotal;
 
-cashflow1.innerText = cashflow1;
-cashflow2.innerText = cashflow2;
+salary1.innerText = inc.salary;
+realestate1.innerText = inc.realEstate;
+interest1.innerText = inc.interest;
+dividends1.innerText = inc.dividends;
+business1.innerText = inc.business;
+otherassets1.innerText = inc.otherAssets;
+
+incomeTotal1.innerText = incomeTotal;
+
+tax1.innerText = exp.tax;
+mortgage1.innerText = exp.mortgage;
+school1.innerText = exp.schoolLoan;
+car1.innerText = exp.carLoan;
+credit1.innerText = exp.creditCard;
+retail1.innerText = exp.retail;
+other1.innerText = exp.other;
+children1.innerText = exp.children;
+
+expenseTotal1.innerText = expenseTotal;
+
+cashflow1.innerText = cashflow;
+
+}
 
 }
 
