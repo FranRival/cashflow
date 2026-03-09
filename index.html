@@ -41,6 +41,10 @@ font-size:16px;
 
 <b>Jugador 1</b><br>
 
+Dinero: $<span id="money1"></span>
+
+<br><br>
+
 INGRESOS<br>
 Salario: $<span id="salary1"></span><br>
 Bienes raíces: $<span id="realestate1"></span><br>
@@ -86,7 +90,6 @@ box-shadow:0 0 20px rgba(0,0,0,0.5);
 ">
 
 <h3 id="cardTitle"></h3>
-
 <div id="cardBody"></div>
 
 <br>
@@ -99,16 +102,12 @@ box-shadow:0 0 20px rgba(0,0,0,0.5);
 
 <script>
 
-/* ======================
-ESCENA
-====================== */
+/* ESCENA */
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 
-/* ======================
-CAMARA
-====================== */
+/* CAMARA */
 
 const camera = new THREE.PerspectiveCamera(
 60,
@@ -136,17 +135,13 @@ camera.lookAt(0,0,0);
 
 });
 
-/* ======================
-RENDER
-====================== */
+/* RENDER */
 
 const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(window.innerWidth,window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-/* ======================
-LUCES
-====================== */
+/* LUCES */
 
 scene.add(new THREE.AmbientLight(0xffffff,0.9));
 
@@ -154,9 +149,7 @@ const light = new THREE.DirectionalLight(0xffffff,0.6);
 light.position.set(10,20,10);
 scene.add(light);
 
-/* ======================
-COLORES CASILLAS
-====================== */
+/* COLORES */
 
 function tileColor(type){
 
@@ -175,9 +168,7 @@ default: return 0x888888;
 
 }
 
-/* ======================
-TIPO CASILLA RANDOM
-====================== */
+/* CASILLA RANDOM */
 
 function randomTileType(){
 
@@ -193,9 +184,7 @@ return "charity";
 
 }
 
-/* ======================
-TRAPECIO
-====================== */
+/* TRAPECIO */
 
 function createTrapezoid(type){
 
@@ -262,15 +251,13 @@ return group;
 
 }
 
-/* ======================
-TABLERO
-====================== */
+/* TABLERO */
 
 const tileCount = 24;
 const radius = 6.2;
 
-const tiles = [];
-const tileTypes = [];
+const tiles=[];
+const tileTypes=[];
 
 for(let i=0;i<tileCount;i++){
 
@@ -292,9 +279,7 @@ tileTypes.push(type);
 
 }
 
-/* ======================
-ILUMINACION CASILLAS
-====================== */
+/* ILUMINACION */
 
 function updateTileHighlights(){
 
@@ -309,17 +294,15 @@ tiles[positions[1]].body.material.emissive.set(0xff0000);
 
 }
 
-/* ======================
-DADO
-====================== */
+/* DADO */
 
 function createDiceMaterial(number){
 
-const canvas = document.createElement("canvas");
-canvas.width = 256;
-canvas.height = 256;
+const canvas=document.createElement("canvas");
+canvas.width=256;
+canvas.height=256;
 
-const ctx = canvas.getContext("2d");
+const ctx=canvas.getContext("2d");
 
 ctx.fillStyle="white";
 ctx.fillRect(0,0,256,256);
@@ -331,16 +314,14 @@ ctx.textBaseline="middle";
 
 ctx.fillText(number,128,140);
 
-const texture = new THREE.CanvasTexture(canvas);
+const texture=new THREE.CanvasTexture(canvas);
 
 return new THREE.MeshStandardMaterial({map:texture});
 
 }
 
 const dice = new THREE.Mesh(
-
 new THREE.BoxGeometry(1.2,1.2,1.2),
-
 [
 createDiceMaterial(1),
 createDiceMaterial(2),
@@ -349,16 +330,12 @@ createDiceMaterial(4),
 createDiceMaterial(5),
 createDiceMaterial(6)
 ]
-
 );
 
 dice.position.set(0,1.2,0);
-
 scene.add(dice);
 
-/* ======================
-JUGADORES
-====================== */
+/* JUGADORES */
 
 function createPlayer(color){
 
@@ -366,7 +343,6 @@ const geo=new THREE.SphereGeometry(0.5,32,32);
 const mat=new THREE.MeshStandardMaterial({color});
 
 const player=new THREE.Mesh(geo,mat);
-
 player.position.y=1;
 
 scene.add(player);
@@ -380,313 +356,107 @@ const player2=createPlayer(0xff4444);
 
 let positions=[0,0];
 
-/* ======================
-ECONOMIA
-====================== */
+/* ECONOMIA */
 
 let money=[5000,5000];
 
-let income = [
-{
-salary:1000,
-realEstate:0,
-interest:0,
-dividends:0,
-business:0,
-otherAssets:0
-},
-{
-salary:1000,
-realEstate:0,
-interest:0,
-dividends:0,
-business:0,
-otherAssets:0
-}
+let income=[
+{salary:1000,realEstate:0,interest:0,dividends:0,business:0,otherAssets:0},
+{salary:1000,realEstate:0,interest:0,dividends:0,business:0,otherAssets:0}
 ];
 
-let expenses = [
-{
-tax:200,
-mortgage:200,
-schoolLoan:100,
-carLoan:100,
-creditCard:100,
-retail:50,
-other:50,
-children:0
-},
-{
-tax:200,
-mortgage:200,
-schoolLoan:100,
-carLoan:100,
-creditCard:100,
-retail:50,
-other:50,
-children:0
-}
+let expenses=[
+{tax:200,mortgage:200,schoolLoan:100,carLoan:100,creditCard:100,retail:50,other:50,children:0},
+{tax:200,mortgage:200,schoolLoan:100,carLoan:100,creditCard:100,retail:50,other:50,children:0}
 ];
 
-const smallDeals = [
-
-{
-title:"Casa pequeña",
-cost:6000,
-cashflow:200
-},
-
-{
-title:"Departamento",
-cost:8000,
-cashflow:300
-},
-
-{
-title:"Terreno",
-cost:3000,
-cashflow:100
-}
-
-];
-
-const bigDeals = [
-
-{
-title:"Edificio 12 unidades",
-cost:40000,
-cashflow:2500
-},
-
-{
-title:"Centro comercial",
-cost:60000,
-cashflow:4000
-}
-
-];
-
-const marketCards = [
-
-{
-title:"Boom inmobiliario",
-effect:"realEstateDouble"
-},
-
-{
-title:"Crash de mercado",
-effect:"realEstateHalf"
-}
-
-];
+/* UI */
 
 function updateUI(){
 
-for(let p=0;p<1;p++){
-
-const inc = income[p];
-const exp = expenses[p];
+const inc=income[0];
+const exp=expenses[0];
 
 const incomeTotal =
-inc.salary +
-inc.realEstate +
-inc.interest +
-inc.dividends +
-inc.business +
+inc.salary+
+inc.realEstate+
+inc.interest+
+inc.dividends+
+inc.business+
 inc.otherAssets;
 
 const expenseTotal =
-exp.tax +
-exp.mortgage +
-exp.schoolLoan +
-exp.carLoan +
-exp.creditCard +
-exp.retail +
-exp.other +
+exp.tax+
+exp.mortgage+
+exp.schoolLoan+
+exp.carLoan+
+exp.creditCard+
+exp.retail+
+exp.other+
 exp.children;
 
-const cashflow = incomeTotal - expenseTotal;
+money1.innerText=money[0];
 
-salary1.innerText = inc.salary;
-realestate1.innerText = inc.realEstate;
-interest1.innerText = inc.interest;
-dividends1.innerText = inc.dividends;
-business1.innerText = inc.business;
-otherassets1.innerText = inc.otherAssets;
+salary1.innerText=inc.salary;
+realestate1.innerText=inc.realEstate;
+interest1.innerText=inc.interest;
+dividends1.innerText=inc.dividends;
+business1.innerText=inc.business;
+otherassets1.innerText=inc.otherAssets;
 
-incomeTotal1.innerText = incomeTotal;
+incomeTotal1.innerText=incomeTotal;
 
-tax1.innerText = exp.tax;
-mortgage1.innerText = exp.mortgage;
-school1.innerText = exp.schoolLoan;
-car1.innerText = exp.carLoan;
-credit1.innerText = exp.creditCard;
-retail1.innerText = exp.retail;
-other1.innerText = exp.other;
-children1.innerText = exp.children;
+tax1.innerText=exp.tax;
+mortgage1.innerText=exp.mortgage;
+school1.innerText=exp.schoolLoan;
+car1.innerText=exp.carLoan;
+credit1.innerText=exp.creditCard;
+retail1.innerText=exp.retail;
+other1.innerText=exp.other;
+children1.innerText=exp.children;
 
-expenseTotal1.innerText = expenseTotal;
+expenseTotal1.innerText=expenseTotal;
 
-cashflow1.innerText = cashflow;
-
-}
+cashflow1.innerText=incomeTotal-expenseTotal;
 
 }
 
-/* ======================
-EVENTO CASILLA
-====================== */
+/* CARTAS */
 
-function resolveTile(index){
-
-const type = tileTypes[index];
-
-if(type === "payday"){
-
-money[currentPlayer] += income[currentPlayer].salary;
-
-showCard(
-"PAYDAY",
-`Recibes tu salario de $${income[currentPlayer].salary}`
-);
-
-}
-
-/* SMALL DEAL */
-
-if(type === "smallDeal"){
-
-const deal =
-smallDeals[Math.floor(Math.random()*smallDeals.length)];
-
-showCard(
-
-"SMALL DEAL",
-
-`
-Activo: ${deal.title}<br>
-Costo: $${deal.cost}<br>
-Flujo de caja: $${deal.cashflow}
-`
-
-);
-
-/* si el jugador compra */
-
-if(money[currentPlayer] >= deal.cost){
-
-money[currentPlayer] -= deal.cost;
-income[currentPlayer].realEstate += deal.cashflow;
-
-}
-
-}
-
-/* BIG DEAL */
-
-if(type === "bigDeal"){
-
-const deal =
-bigDeals[Math.floor(Math.random()*bigDeals.length)];
-
-showCard(
-
-"BIG DEAL",
-
-`
-Activo: ${deal.title}<br>
-Costo: $${deal.cost}<br>
-Flujo de caja: $${deal.cashflow}
-`
-
-);
-
-if(money[currentPlayer] >= deal.cost){
-
-money[currentPlayer] -= deal.cost;
-income[currentPlayer].business += deal.cashflow;
-
-}
-
-}
-
-/* MARKET */
-
-if(type === "market"){
-
-const event =
-marketCards[Math.floor(Math.random()*marketCards.length)];
-
-showCard(
-
-"MARKET",
-
-event.title
-
-);
-
-}
-
-/* DOODAD */
-
-if(type === "doodad"){
-
-const cost = 700;
-
-money[currentPlayer] -= cost;
-
-showCard(
-"DOODAD",
-`Gasto inesperado de $${cost}`
-);
-
-}
-
-/* CHARITY */
-
-if(type === "charity"){
-
-const cost = 300;
-
-money[currentPlayer] -= cost;
-
-showCard(
-"CHARITY",
-`Donación de $${cost}<br>
-Tus gastos se reducen`
-);
-
-expenses[currentPlayer].other -= 50;
-
-}
-
-}
-
-//mostrar cartas
 function showCard(title,body){
 
-document.getElementById("cardTitle").innerText = title;
-document.getElementById("cardBody").innerHTML = body;
+cardTitle.innerText=title;
+cardBody.innerHTML=body;
 
-document.getElementById("card").style.display = "block";
+card.style.display="block";
 
 }
 
 function closeCard(){
 
-document.getElementById("card").style.display = "none";
+card.style.display="none";
 
 }
 
-/* ======================
-TURNOS
-====================== */
+/* EVENTO CASILLA */
+
+function resolveTile(index){
+
+const type = tileTypes[index];
+
+if(type==="payday"){
+
+money[currentPlayer]+=income[currentPlayer].salary;
+
+showCard("PAYDAY","Recibes tu salario");
+
+}
+
+}
+
+/* TURNOS */
 
 let currentPlayer=0;
-
-/* ======================
-LANZAR DADO
-====================== */
 
 function rollDice(){
 
@@ -697,10 +467,6 @@ const result=Math.floor(Math.random()*6)+1;
 movePlayer(result);
 
 }
-
-/* ======================
-IA
-====================== */
 
 function aiTurn(){
 
@@ -714,25 +480,15 @@ movePlayer(result);
 
 }
 
-/* ======================
-CAMBIO TURNO
-====================== */
-
 function switchTurn(){
 
 currentPlayer=currentPlayer===0?1:0;
 
-if(currentPlayer===1){
-
-aiTurn();
+if(currentPlayer===1) aiTurn();
 
 }
 
-}
-
-/* ======================
-MOVIMIENTO
-====================== */
+/* MOVIMIENTO */
 
 function movePlayer(steps){
 
@@ -744,12 +500,10 @@ if(step>=steps){
 
 resolveTile(positions[currentPlayer]);
 
-money[currentPlayer]+=passive[currentPlayer];
-money[currentPlayer]-=expenses[currentPlayer];
-
 updateUI();
 
 switchTurn();
+
 return;
 
 }
@@ -798,9 +552,7 @@ stepMove();
 
 }
 
-/* ======================
-POSICION INICIAL
-====================== */
+/* POSICION INICIAL */
 
 function placePlayers(){
 
@@ -818,9 +570,7 @@ placePlayers();
 updateTileHighlights();
 updateUI();
 
-/* ======================
-LOOP
-====================== */
+/* LOOP */
 
 function animate(){
 
