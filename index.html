@@ -34,30 +34,25 @@ font-size:16px;
 
 <div id="ui">
 <button onclick="rollDice()">Lanzar dado</button>
-<div id="ui" style="
-position:absolute;
-top:20px;
-right:20px;
-background:rgba(0,0,0,0.6);
-padding:12px;
-border-radius:8px;
-color:white;
-font-family:Arial;
-">
 
-<div>Jugador 1</div>
+<hr>
+
+<b>Jugador 1</b><br>
 Dinero: $<span id="money1">5000</span><br>
-Pasivo: $<span id="passive1">0</span><br>
-Gastos: $<span id="expenses1">800</span>
+Ingreso Pasivo: $<span id="passive1">0</span><br>
+Salario: $<span id="salary1">1000</span><br>
+Gastos: $<span id="expenses1">800</span><br>
+Flujo de Caja: $<span id="cashflow1">200</span><br>
 
-<br><br>
+<br>
 
-<div>Jugador 2</div>
+<b>Jugador 2</b><br>
 Dinero: $<span id="money2">5000</span><br>
-Pasivo: $<span id="passive2">0</span><br>
-Gastos: $<span id="expenses2">800</span>
+Ingreso Pasivo: $<span id="passive2">0</span><br>
+Salario: $<span id="salary2">1000</span><br>
+Gastos: $<span id="expenses2">800</span><br>
+Flujo de Caja: $<span id="cashflow2">200</span>
 
-</div>
 </div>
 
 
@@ -485,6 +480,7 @@ player2.position.z=tile.position.z;
 
 placePlayers();
 updateTileHighlights();
+updateUI();
 
 
 //hoja de balances
@@ -496,8 +492,17 @@ money2.innerText = money[1];
 passive1.innerText = passive[0];
 passive2.innerText = passive[1];
 
+salary1.innerText = salary[0];
+salary2.innerText = salary[1];
+
 expenses1.innerText = expenses[0];
 expenses2.innerText = expenses[1];
+
+const cashflow1 = salary[0] + passive[0] - expenses[0];
+const cashflow2 = salary[1] + passive[1] - expenses[1];
+
+document.getElementById("cashflow1").innerText = cashflow1;
+document.getElementById("cashflow2").innerText = cashflow2;
 
 }
 
