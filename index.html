@@ -310,20 +310,6 @@ movePlayer(result);
 }
 
 
-// IA
-function aiTurn(){
-
-setTimeout(()=>{
-
-const result = Math.floor(Math.random()*6)+1;
-
-console.log("IA sacó:", result);
-
-movePlayer(result);
-
-},800);
-
-}
 
 
 // cambio de turno
@@ -358,20 +344,6 @@ movePlayer(result);
 }
 
 
-// cambio de turno
-function switchTurn(){
-
-currentPlayer = currentPlayer === 0 ? 1 : 0;
-
-console.log("Turno jugador", currentPlayer + 1);
-
-if(currentPlayer === 1){
-
-aiTurn();
-
-}
-
-}
 
 function switchTurn(){
 
