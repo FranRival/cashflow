@@ -71,6 +71,30 @@ Flujo de caja: $<span id="cashflow1"></span>
 
 </div>
 
+<div id="card" style="
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:white;
+color:black;
+padding:20px;
+border-radius:10px;
+width:320px;
+display:none;
+box-shadow:0 0 20px rgba(0,0,0,0.5);
+">
+
+<h3 id="cardTitle"></h3>
+
+<div id="cardBody"></div>
+
+<br>
+
+<button onclick="closeCard()">OK</button>
+
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
 <script>
@@ -404,6 +428,58 @@ children:0
 }
 ];
 
+const smallDeals = [
+
+{
+title:"Casa pequeña",
+cost:6000,
+cashflow:200
+},
+
+{
+title:"Departamento",
+cost:8000,
+cashflow:300
+},
+
+{
+title:"Terreno",
+cost:3000,
+cashflow:100
+}
+
+];
+
+const bigDeals = [
+
+{
+title:"Edificio 12 unidades",
+cost:40000,
+cashflow:2500
+},
+
+{
+title:"Centro comercial",
+cost:60000,
+cashflow:4000
+}
+
+];
+
+const marketCards = [
+
+{
+title:"Boom inmobiliario",
+effect:"realEstateDouble"
+},
+
+{
+title:"Crash de mercado",
+effect:"realEstateHalf"
+}
+
+];
+
 function updateUI(){
 
 for(let p=0;p<1;p++){
@@ -465,36 +541,140 @@ function resolveTile(index){
 
 const type = tileTypes[index];
 
-if(type==="payday") money[currentPlayer]+=salary[currentPlayer];
+if(type === "payday"){
 
-if(type==="smallDeal" && money[currentPlayer]>=1000){
+money[currentPlayer] += income[currentPlayer].salary;
 
-money[currentPlayer]-=1000;
-passive[currentPlayer]+=100;
-
-}
-
-if(type==="bigDeal" && money[currentPlayer]>=4000){
-
-money[currentPlayer]-=4000;
-passive[currentPlayer]+=500;
+showCard(
+"PAYDAY",
+`Recibes tu salario de $${income[currentPlayer].salary}`
+);
 
 }
 
-if(type==="market"){
+/* SMALL DEAL */
 
-money[currentPlayer]+=Math.floor(Math.random()*1000)-500;
+if(type === "smallDeal"){
+
+const deal =
+smallDeals[Math.floor(Math.random()*smallDeals.length)];
+
+showCard(
+
+"SMALL DEAL",
+
+`
+Activo: ${deal.title}<br>
+Costo: $${deal.cost}<br>
+Flujo de caja: $${deal.cashflow}
+`
+
+);
+
+/* si el jugador compra */
+
+if(money[currentPlayer] >= deal.cost){
+
+money[currentPlayer] -= deal.cost;
+income[currentPlayer].realEstate += deal.cashflow;
 
 }
 
-if(type==="doodad") money[currentPlayer]-=700;
+}
 
-if(type==="charity"){
+/* BIG DEAL */
 
-money[currentPlayer]-=300;
-expenses[currentPlayer]-=50;
+if(type === "bigDeal"){
+
+const deal =
+bigDeals[Math.floor(Math.random()*bigDeals.length)];
+
+showCard(
+
+"BIG DEAL",
+
+`
+Activo: ${deal.title}<br>
+Costo: $${deal.cost}<br>
+Flujo de caja: $${deal.cashflow}
+`
+
+);
+
+if(money[currentPlayer] >= deal.cost){
+
+money[currentPlayer] -= deal.cost;
+income[currentPlayer].business += deal.cashflow;
 
 }
+
+}
+
+/* MARKET */
+
+if(type === "market"){
+
+const event =
+marketCards[Math.floor(Math.random()*marketCards.length)];
+
+showCard(
+
+"MARKET",
+
+event.title
+
+);
+
+}
+
+/* DOODAD */
+
+if(type === "doodad"){
+
+const cost = 700;
+
+money[currentPlayer] -= cost;
+
+showCard(
+"DOODAD",
+`Gasto inesperado de $${cost}`
+);
+
+}
+
+/* CHARITY */
+
+if(type === "charity"){
+
+const cost = 300;
+
+money[currentPlayer] -= cost;
+
+showCard(
+"CHARITY",
+`Donación de $${cost}<br>
+Tus gastos se reducen`
+);
+
+expenses[currentPlayer].other -= 50;
+
+}
+
+}
+
+//mostrar cartas
+function showCard(title,body){
+
+document.getElementById("cardTitle").innerText = title;
+document.getElementById("cardBody").innerHTML = body;
+
+document.getElementById("card").style.display = "block";
+
+}
+
+function closeCard(){
+
+document.getElementById("card").style.display = "none";
 
 }
 
