@@ -174,11 +174,11 @@ function randomTileType(){
 
 const r=Math.random();
 
-if(r<0.2) return "payday";
-if(r<0.45) return "smallDeal";
-if(r<0.6) return "bigDeal";
+if(r<0.25) return "payday";
+if(r<0.55) return "smallDeal";
+if(r<0.65) return "bigDeal";
 if(r<0.75) return "market";
-if(r<0.9) return "doodad";
+if(r<0.90) return "doodad";
 
 return "charity";
 
@@ -475,6 +475,8 @@ function animateValueChange(elementId, change){
 
 const el = document.getElementById(elementId);
 
+if(!el) return;
+
 if(change > 0){
 
 el.style.color = "#00ff00";
@@ -523,19 +525,20 @@ const type = tileTypes[index];
 
 /* PAYDAY */
 
+
 if(type === "payday"){
 
+const salary = income[currentPlayer].salary;
 
-const cashflow = getCashflow(currentPlayer);
+money[currentPlayer] += salary;
 
-money[currentPlayer] += cashflow;
+const moneyElement = currentPlayer === 0 ? "money1" : "money2";
 
-animateValueChange("money1", cashflow);
-animateValueChange("cashflow1", cashflow);
+animateValueChange(moneyElement, salary);
 
 showCard(
 "PAYDAY",
-`Recibes tu salario de $${cashflow}}`
+`Recibes tu salario de $${salary}`
 );
 
 }
@@ -606,15 +609,18 @@ event.title
 
 if(event.effect === "realEstateDouble"){
 
-income[currentPlayer].realEstate *= 2;
+income[currentPlayer].realEstate += 250;
 
 }
 
 if(event.effect === "realEstateHalf"){
 
-income[currentPlayer].realEstate *= 0.5;
+income[currentPlayer].realEstate =
+Math.floor(income[currentPlayer].realEstate * 0.7);
 
 }
+
+updateUI();
 
 }
 
