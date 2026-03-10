@@ -174,7 +174,7 @@ function randomTileType(){
 
 const r=Math.random();
 
-if(r<0.25) return "payday";
+if(r<0.2) return "payday";
 if(r<0.55) return "smallDeal";
 if(r<0.65) return "bigDeal";
 if(r<0.75) return "market";
@@ -669,7 +669,7 @@ let currentPlayer=0;
 
 function rollDice(){
 
-if(currentPlayer!==0) return;
+if(currentPlayer!==0 || waitingCard) return;
 
 const result=Math.floor(Math.random()*6)+1;
 
@@ -693,7 +693,7 @@ function switchTurn(){
 
 currentPlayer=currentPlayer===0?1:0;
 
-if(currentPlayer===1) aiTurn();
+if(currentPlayer===1) {setTimeout(aiTurn, 1500)}
 
 }
 
@@ -711,9 +711,7 @@ resolveTile(positions[currentPlayer]);
 
 updateUI();
 
-if(!waitingCard){
-switchTurn();
-}
+
 return
 
 
