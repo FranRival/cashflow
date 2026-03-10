@@ -393,6 +393,33 @@ let expenses=[
 {tax:200,mortgage:200,schoolLoan:100,carLoan:100,creditCard:100,retail:50,other:50,children:0}
 ];
 
+
+function getCashflow(player){
+
+const inc = income[player];
+const exp = expenses[player];
+
+const incomeTotal =
+inc.salary +
+inc.realEstate +
+inc.interest +
+inc.dividends +
+inc.business +
+inc.otherAssets;
+
+const expenseTotal =
+exp.tax +
+exp.mortgage +
+exp.schoolLoan +
+exp.carLoan +
+exp.creditCard +
+exp.retail +
+exp.other +
+exp.children;
+
+return incomeTotal - expenseTotal;
+
+}
 /* UI */
 
 function updateUI(){
@@ -444,6 +471,28 @@ cashflow1.innerText=incomeTotal-expenseTotal;
 
 }
 
+function animateValueChange(elementId, change){
+
+const el = document.getElementById(elementId);
+
+if(change > 0){
+
+el.style.color = "#00ff00";
+
+}else if(change < 0){
+
+el.style.color = "#ff4444";
+
+}
+
+setTimeout(()=>{
+
+el.style.color = "white";
+
+},1000);
+
+}
+
 /* CARTAS */
 
 function showCard(title,body){
@@ -476,11 +525,17 @@ const type = tileTypes[index];
 
 if(type === "payday"){
 
-money[currentPlayer] += income[currentPlayer].salary;
+
+const cashflow = getCashflow(currentPlayer);
+
+money[currentPlayer] += cashflow;
+
+animateValueChange("money1", cashflow);
+animateValueChange("cashflow1", cashflow);
 
 showCard(
 "PAYDAY",
-`Recibes tu salario de $${income[currentPlayer].salary}`
+`Recibes tu salario de $${cashflow}}`
 );
 
 }
@@ -505,6 +560,7 @@ if(money[currentPlayer] >= deal.cost){
 
 money[currentPlayer] -= deal.cost;
 income[currentPlayer].realEstate += deal.cashflow;
+animateValueChange("cashflow1", deal.cashflow);
 
 }
 
@@ -530,6 +586,7 @@ if(money[currentPlayer] >= deal.cost){
 
 money[currentPlayer] -= deal.cost;
 income[currentPlayer].business += deal.cashflow;
+animateValueChange("cashflow1", deal.cashflow);
 
 }
 
@@ -569,6 +626,7 @@ const cost = 700;
 
 money[currentPlayer] =
 Math.max(0, money[currentPlayer] - cost);
+animateValueChange("money1", -cost);
 
 showCard(
 "DOODAD",
