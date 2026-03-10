@@ -355,10 +355,33 @@ const player1=createPlayer(0x00ff00);
 const player2=createPlayer(0xff4444);
 
 let positions=[0,0];
+let waitingCard = false;
 
 /* ECONOMIA */
 
 let money=[5000,5000];
+
+const smallDeals = [
+
+{title:"Casa pequeña",cost:6000,cashflow:200},
+{title:"Departamento",cost:8000,cashflow:300},
+{title:"Terreno",cost:3000,cashflow:100}
+
+];
+
+const bigDeals = [
+
+{title:"Edificio 12 unidades",cost:40000,cashflow:2500},
+{title:"Centro comercial",cost:60000,cashflow:4000}
+
+];
+
+const marketCards = [
+
+{title:"Boom inmobiliario",effect:"realEstateDouble"},
+{title:"Crash de mercado",effect:"realEstateHalf"}
+
+];
 
 let income=[
 {salary:1000,realEstate:0,interest:0,dividends:0,business:0,otherAssets:0},
@@ -425,6 +448,8 @@ cashflow1.innerText=incomeTotal-expenseTotal;
 
 function showCard(title,body){
 
+    waitingCard = true;
+
 cardTitle.innerText=title;
 cardBody.innerHTML=body;
 
@@ -436,6 +461,8 @@ function closeCard(){
 
 card.style.display="none";
 
+waitingCard = false;
+switchTurn();
 }
 
 /* EVENTO CASILLA */
@@ -620,9 +647,11 @@ resolveTile(positions[currentPlayer]);
 
 updateUI();
 
+if(!waitingCard){
 switchTurn();
+}
+return
 
-return;
 
 }
 
