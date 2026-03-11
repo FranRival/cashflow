@@ -42,6 +42,7 @@ font-size:16px;
 <b>Jugador 1</b><br>
 
 Dinero: $<span id="money1"></span>
+Deuda banco: $<span id="loan1"></span>
 
 <br><br>
 
@@ -383,6 +384,10 @@ let charityTurns = [0,0];
 
 let money=[5000,5000];
 
+//banco
+let loans = [0,0];
+const bankInterestRate = 0.1;
+
 let assets = [
 {
 realEstate: [],
@@ -503,6 +508,17 @@ expenseTotal1.innerText=expenseTotal;
 cashflow1.innerText=incomeTotal-expenseTotal;
 
 assets1.innerHTML = getAssetsList(0);
+loan1.innerText = loans[0];
+
+}
+
+//pedir prestamo 
+function takeLoan(player, amount){
+
+loans[player] += amount;
+money[player] += amount;
+
+animateValueChange("money1", amount);
 
 }
 
@@ -628,17 +644,29 @@ return;
 
 }
 
+if(type === "payday"){
+
 const salary = income[currentPlayer].salary;
 
 money[currentPlayer] += salary;
 
-const moneyElement = currentPlayer === 0 ? "money1" : "money2";
+/* pago de intereses al banco */
 
-animateValueChange(moneyElement, salary);
+const interestPayment = loans[currentPlayer] * bankInterestRate;
+
+money[currentPlayer] -= interestPayment;
+
+/* animaciones */
+
+animateValueChange("money1", salary);
+animateValueChange("money1", -interestPayment);
 
 showCard(
 "PAYDAY",
-`Recibes tu salario de $${salary}`
+`
+Salario recibido: $${salary}<br>
+Intereses banco: $${interestPayment}
+`
 );
 
 }
@@ -657,8 +685,19 @@ decisionActions.push(function(){
 if(money[currentPlayer] >= deal.cost){
 
 money[currentPlayer] -= deal.cost;
+income[currentPlayer].realEstate += deal.cashflow;
+
+}else{
+
+const needed = deal.cost - money[currentPlayer];
+
+takeLoan(currentPlayer, needed);
+
+money[currentPlayer] -= deal.cost;
 
 income[currentPlayer].realEstate += deal.cashflow;
+
+}
 
 assets[currentPlayer].realEstate.push({
 name: deal.title,
