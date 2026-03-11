@@ -370,6 +370,8 @@ let waitingCard = false;
 
 let downsizedTurns = [0,0];
 
+let charityTurns = [0,0];
+
 /* ECONOMIA */
 
 let money=[5000,5000];
@@ -787,6 +789,7 @@ Tus gastos aumentan $150
 
 /* CHARITY */
 
+
 if(type === "charity"){
 
 const cost = 300;
@@ -794,10 +797,14 @@ const cost = 300;
 money[currentPlayer] =
 Math.max(0, money[currentPlayer] - cost);
 
+charityTurns[currentPlayer] = 3;
+
 showCard(
 "CHARITY",
-`Donación de $${cost}<br>
-Tus gastos se reducen`
+`
+Donas $${cost}<br><br>
+Durante 3 turnos podrás lanzar 2 dados
+`
 );
 
 expenses[currentPlayer].other =
@@ -805,17 +812,40 @@ Math.max(0, expenses[currentPlayer].other - 50);
 
 }
 
-}
-
 /* TURNOS */
 
 let currentPlayer=0;
+
 
 function rollDice(){
 
 if(currentPlayer!==0 || waitingCard) return;
 
-const result=Math.floor(Math.random()*6)+1;
+let result;
+
+if(charityTurns[currentPlayer] > 0){
+
+const dice1 = Math.floor(Math.random()*6)+1;
+const dice2 = Math.floor(Math.random()*6)+1;
+
+result = dice1 + dice2;
+
+charityTurns[currentPlayer]--;
+
+showCard(
+"DOUBLE DICE",
+`
+Caridad activa<br>
+Dados: ${dice1} + ${dice2} = ${result}<br>
+Turnos restantes: ${charityTurns[currentPlayer]}
+`
+);
+
+}else{
+
+result = Math.floor(Math.random()*6)+1;
+
+}
 
 movePlayer(result);
 
@@ -825,7 +855,22 @@ function aiTurn(){
 
 setTimeout(()=>{
 
-const result=Math.floor(Math.random()*6)+1;
+let result;
+
+if(charityTurns[currentPlayer] > 0){
+
+const dice1 = Math.floor(Math.random()*6)+1;
+const dice2 = Math.floor(Math.random()*6)+1;
+
+result = dice1 + dice2;
+
+charityTurns[currentPlayer]--;
+
+}else{
+
+result = Math.floor(Math.random()*6)+1;
+
+}
 
 movePlayer(result);
 
