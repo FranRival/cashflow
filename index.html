@@ -42,6 +42,7 @@ font-size:16px;
 <b>Jugador 1</b><br>
 
 Dinero: $<span id="money1"></span>
+Deuda banco: $<span id="loan1"></span>
 
 <br><br>
 
@@ -65,13 +66,18 @@ Auto: $<span id="car1"></span><br>
 Tarjeta crédito: $<span id="credit1"></span><br>
 Pagos menores: $<span id="retail1"></span><br>
 Otros: $<span id="other1"></span><br>
-Hijos: $<span id="children1"></span><br>
+Hijos: <span id="childcount1"></span><br>
+Gasto hijos: $<span id="children1"></span>
 
 Total gastos: $<span id="expenseTotal1"></span>
 
 <br><br>
 
 Flujo de caja: $<span id="cashflow1"></span>
+<br><br>
+
+ACTIVOS<br>
+<div id="assets1"></div>
 
 </div>
 
@@ -128,6 +134,7 @@ window.innerWidth/window.innerHeight,
 let cameraAngle = 0;
 let cameraRadius = 15;
 let cameraHeight = 8;
+let childrenCount = [0,0];
 
 camera.position.set(0,cameraHeight,cameraRadius);
 camera.lookAt(0,0,0);
@@ -170,6 +177,8 @@ case "bigDeal": return 0x9b59b6;
 case "market": return 0xf1c40f;
 case "charity": return 0xffffff;
 case "doodad": return 0xe74c3c;
+case "child": return 0xff69b4;
+case "downsized": return 0x555555;
 
 default: return 0x888888;
 
@@ -188,8 +197,10 @@ if(r<0.55) return "smallDeal";
 if(r<0.65) return "bigDeal";
 if(r<0.75) return "market";
 if(r<0.90) return "doodad";
+if(r<0.93) return "charity";
+if(r<0.96) return "child";
 
-return "charity";
+return "downsize";
 
 }
 
@@ -303,6 +314,9 @@ tiles[positions[1]].body.material.emissive.set(0xff0000);
 
 }
 
+
+
+
 /* DADO */
 
 function createDiceMaterial(number){
@@ -366,9 +380,28 @@ const player2=createPlayer(0xff4444);
 let positions=[0,0];
 let waitingCard = false;
 
+let downsizedTurns = [0,0];
+
+let charityTurns = [0,0];
+
 /* ECONOMIA */
 
 let money=[5000,5000];
+
+//banco
+let loans = [0,0];
+const bankInterestRate = 0.1;
+
+let assets = [
+{
+realEstate: [],
+business: []
+},
+{
+realEstate: [],
+business: []
+}
+];
 
 const smallDeals = [
 
@@ -478,6 +511,37 @@ expenseTotal1.innerText=expenseTotal;
 
 cashflow1.innerText=incomeTotal-expenseTotal;
 
+assets1.innerHTML = getAssetsList(0);
+loan1.innerText = loans[0];
+
+}
+
+//pedir prestamo 
+function takeLoan(player, amount){
+
+loans[player] += amount;
+money[player] += amount;
+
+animateValueChange("money1", amount);
+
+}
+
+function getAssetsList(player){
+
+let list = "";
+
+assets[player].realEstate.forEach(a=>{
+list += "🏠 " + a.name + " | +" + a.cashflow + "<br>";
+});
+
+assets[player].business.forEach(a=>{
+list += "🏢 " + a.name + " | +" + a.cashflow + "<br>";
+});
+
+if(list === "") list = "Sin activos";
+
+return list;
+
 }
 
 function animateValueChange(elementId, change){
@@ -568,17 +632,45 @@ const type = tileTypes[index];
 
 if(type === "payday"){
 
+if(downsizedTurns[currentPlayer] > 0){
+
+downsizedTurns[currentPlayer]--;
+
+showCard(
+"DESEMPLEADO",
+`
+Sigues desempleado.<br>
+Turnos restantes sin salario: ${downsizedTurns[currentPlayer]}
+`
+);
+
+return;
+
+}
+
+if(type === "payday"){
+
 const salary = income[currentPlayer].salary;
 
 money[currentPlayer] += salary;
 
-const moneyElement = currentPlayer === 0 ? "money1" : "money2";
+/* pago de intereses al banco */
 
-animateValueChange(moneyElement, salary);
+const interestPayment = loans[currentPlayer] * bankInterestRate;
+
+money[currentPlayer] -= interestPayment;
+
+/* animaciones */
+
+animateValueChange("money1", salary);
+animateValueChange("money1", -interestPayment);
 
 showCard(
 "PAYDAY",
-`Recibes tu salario de $${salary}`
+`
+Salario recibido: $${salary}<br>
+Intereses banco: $${interestPayment}
+`
 );
 
 }
@@ -598,6 +690,24 @@ if(money[currentPlayer] >= deal.cost){
 
 money[currentPlayer] -= deal.cost;
 income[currentPlayer].realEstate += deal.cashflow;
+
+}else{
+
+const needed = deal.cost - money[currentPlayer];
+
+takeLoan(currentPlayer, needed);
+
+money[currentPlayer] -= deal.cost;
+
+income[currentPlayer].realEstate += deal.cashflow;
+
+}
+
+assets[currentPlayer].realEstate.push({
+name: deal.title,
+cashflow: deal.cashflow,
+cost: deal.cost
+});
 
 animateValueChange("cashflow1", deal.cashflow);
 
@@ -627,6 +737,22 @@ noIndex
 
 }
 
+/* DOWNSIZED */
+
+if(type === "downsized"){
+
+downsizedTurns[currentPlayer] = 2;
+
+showCard(
+"DOWNSIZED",
+`
+¡Has perdido tu trabajo!<br><br>
+Durante 2 turnos no recibirás salario.
+`
+);
+
+}
+
 /* BIG DEAL */
 
 if(type === "bigDeal"){
@@ -641,7 +767,14 @@ decisionActions.push(function(){
 if(money[currentPlayer] >= deal.cost){
 
 money[currentPlayer] -= deal.cost;
+
 income[currentPlayer].business += deal.cashflow;
+
+assets[currentPlayer].business.push({
+name: deal.title,
+cashflow: deal.cashflow,
+cost: deal.cost
+});
 
 animateValueChange("cashflow1", deal.cashflow);
 
@@ -730,7 +863,27 @@ showCard(
 
 }
 
+/* CHILD */
+
+if(type === "child"){
+
+childrenCount[currentPlayer]++;
+
+expenses[currentPlayer].children += 150;
+
+showCard(
+"HIJO",
+`
+¡Has tenido un hijo! 👶<br><br>
+Hijos totales: ${childrenCount[currentPlayer]}<br>
+Tus gastos aumentan $150
+`
+);
+
+}
+
 /* CHARITY */
+
 
 if(type === "charity"){
 
@@ -739,10 +892,14 @@ const cost = 300;
 money[currentPlayer] =
 Math.max(0, money[currentPlayer] - cost);
 
+charityTurns[currentPlayer] = 3;
+
 showCard(
 "CHARITY",
-`Donación de $${cost}<br>
-Tus gastos se reducen`
+`
+Donas $${cost}<br><br>
+Durante 3 turnos podrás lanzar 2 dados
+`
 );
 
 expenses[currentPlayer].other =
@@ -750,17 +907,40 @@ Math.max(0, expenses[currentPlayer].other - 50);
 
 }
 
-}
-
 /* TURNOS */
 
 let currentPlayer=0;
+
 
 function rollDice(){
 
 if(currentPlayer!==0 || waitingCard) return;
 
-const result=Math.floor(Math.random()*6)+1;
+let result;
+
+if(charityTurns[currentPlayer] > 0){
+
+const dice1 = Math.floor(Math.random()*6)+1;
+const dice2 = Math.floor(Math.random()*6)+1;
+
+result = dice1 + dice2;
+
+charityTurns[currentPlayer]--;
+
+showCard(
+"DOUBLE DICE",
+`
+Caridad activa<br>
+Dados: ${dice1} + ${dice2} = ${result}<br>
+Turnos restantes: ${charityTurns[currentPlayer]}
+`
+);
+
+}else{
+
+result = Math.floor(Math.random()*6)+1;
+
+}
 
 movePlayer(result);
 
@@ -770,7 +950,22 @@ function aiTurn(){
 
 setTimeout(()=>{
 
-const result=Math.floor(Math.random()*6)+1;
+let result;
+
+if(charityTurns[currentPlayer] > 0){
+
+const dice1 = Math.floor(Math.random()*6)+1;
+const dice2 = Math.floor(Math.random()*6)+1;
+
+result = dice1 + dice2;
+
+charityTurns[currentPlayer]--;
+
+}else{
+
+result = Math.floor(Math.random()*6)+1;
+
+}
 
 movePlayer(result);
 
