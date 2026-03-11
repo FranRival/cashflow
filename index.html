@@ -90,7 +90,14 @@ box-shadow:0 0 20px rgba(0,0,0,0.5);
 ">
 
 <h3 id="cardTitle"></h3>
+
 <div id="cardBody"></div>
+
+<br>
+
+<div id="cardButtons"></div>
+
+</div>
 
 <br>
 
@@ -508,6 +515,37 @@ card.style.display="block";
 
 }
 
+function showDecision(title, body, yesAction, noAction){
+
+waitingCard = true;
+
+cardTitle.innerText = title;
+cardBody.innerHTML = body;
+
+cardButtons.innerHTML = `
+<button onclick="executeDecision(${yesAction})">Aceptar</button>
+<button onclick="executeDecision(${noAction})">Rechazar</button>
+`;
+
+card.style.display = "block";
+
+}
+
+let decisionActions = [];
+
+function executeDecision(index){
+
+if(decisionActions[index]){
+decisionActions[index]();
+}
+
+card.style.display="none";
+waitingCard=false;
+
+switchTurn();
+
+}
+
 function closeCard(){
 
 card.style.display="none";
@@ -550,22 +588,40 @@ if(type === "smallDeal"){
 const deal =
 smallDeals[Math.floor(Math.random()*smallDeals.length)];
 
-showCard(
-"SMALL DEAL",
-`
-Activo: ${deal.title}<br>
-Costo: $${deal.cost}<br>
-Flujo de caja: $${deal.cashflow}
-`
-);
+const yesIndex = decisionActions.length;
+
+decisionActions.push(function(){
 
 if(money[currentPlayer] >= deal.cost){
 
 money[currentPlayer] -= deal.cost;
 income[currentPlayer].realEstate += deal.cashflow;
+
 animateValueChange("cashflow1", deal.cashflow);
 
 }
+
+});
+
+const noIndex = decisionActions.length;
+
+decisionActions.push(function(){});
+
+showDecision(
+
+"SMALL DEAL",
+
+`
+Activo: ${deal.title}<br>
+Costo: $${deal.cost}<br>
+Flujo de caja: $${deal.cashflow}<br><br>
+¿Comprar inversión?
+`,
+
+yesIndex,
+noIndex
+
+);
 
 }
 
@@ -576,22 +632,40 @@ if(type === "bigDeal"){
 const deal =
 bigDeals[Math.floor(Math.random()*bigDeals.length)];
 
-showCard(
-"BIG DEAL",
-`
-Activo: ${deal.title}<br>
-Costo: $${deal.cost}<br>
-Flujo de caja: $${deal.cashflow}
-`
-);
+const yesIndex = decisionActions.length;
+
+decisionActions.push(function(){
 
 if(money[currentPlayer] >= deal.cost){
 
 money[currentPlayer] -= deal.cost;
 income[currentPlayer].business += deal.cashflow;
+
 animateValueChange("cashflow1", deal.cashflow);
 
 }
+
+});
+
+const noIndex = decisionActions.length;
+
+decisionActions.push(function(){});
+
+showDecision(
+
+"BIG DEAL",
+
+`
+Activo: ${deal.title}<br>
+Costo: $${deal.cost}<br>
+Flujo de caja: $${deal.cashflow}<br><br>
+¿Invertir?
+`,
+
+yesIndex,
+noIndex
+
+);
 
 }
 
@@ -602,25 +676,38 @@ if(type === "market"){
 const event =
 marketCards[Math.floor(Math.random()*marketCards.length)];
 
-showCard(
-"MARKET",
-event.title
-);
+const yesIndex = decisionActions.length;
+
+decisionActions.push(function(){
 
 if(event.effect === "realEstateDouble"){
-
 income[currentPlayer].realEstate += 250;
-
 }
 
 if(event.effect === "realEstateHalf"){
-
 income[currentPlayer].realEstate =
 Math.floor(income[currentPlayer].realEstate * 0.7);
-
 }
 
-updateUI();
+});
+
+const noIndex = decisionActions.length;
+
+decisionActions.push(function(){});
+
+showDecision(
+
+"MARKET",
+
+`
+${event.title}<br><br>
+¿Tomar oportunidad?
+`,
+
+yesIndex,
+noIndex
+
+);
 
 }
 
