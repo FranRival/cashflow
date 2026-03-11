@@ -65,7 +65,8 @@ Auto: $<span id="car1"></span><br>
 Tarjeta crédito: $<span id="credit1"></span><br>
 Pagos menores: $<span id="retail1"></span><br>
 Otros: $<span id="other1"></span><br>
-Hijos: $<span id="children1"></span><br>
+Hijos: <span id="childcount1"></span><br>
+Gasto hijos: $<span id="children1"></span>
 
 Total gastos: $<span id="expenseTotal1"></span>
 
@@ -124,6 +125,7 @@ window.innerWidth/window.innerHeight,
 let cameraAngle = 0;
 let cameraRadius = 15;
 let cameraHeight = 8;
+let childrenCount = [0,0];
 
 camera.position.set(0,cameraHeight,cameraRadius);
 camera.lookAt(0,0,0);
@@ -166,6 +168,7 @@ case "bigDeal": return 0x9b59b6;
 case "market": return 0xf1c40f;
 case "charity": return 0xffffff;
 case "doodad": return 0xe74c3c;
+case "child": return 0xff69b4;
 
 default: return 0x888888;
 
@@ -184,8 +187,9 @@ if(r<0.55) return "smallDeal";
 if(r<0.65) return "bigDeal";
 if(r<0.75) return "market";
 if(r<0.90) return "doodad";
+if(r<0.93) return "charity";
 
-return "charity";
+return "child";
 
 }
 
@@ -722,6 +726,25 @@ animateValueChange("money1", -cost);
 showCard(
 "DOODAD",
 `Gasto inesperado de $${cost}`
+);
+
+}
+
+/* CHILD */
+
+if(type === "child"){
+
+childrenCount[currentPlayer]++;
+
+expenses[currentPlayer].children += 150;
+
+showCard(
+"HIJO",
+`
+¡Has tenido un hijo! 👶<br><br>
+Hijos totales: ${childrenCount[currentPlayer]}<br>
+Tus gastos aumentan $150
+`
 );
 
 }
