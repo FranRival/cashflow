@@ -73,6 +73,10 @@ Total gastos: $<span id="expenseTotal1"></span>
 <br><br>
 
 Flujo de caja: $<span id="cashflow1"></span>
+<br><br>
+
+ACTIVOS<br>
+<div id="assets1"></div>
 
 </div>
 
@@ -305,6 +309,9 @@ tiles[positions[1]].body.material.emissive.set(0xff0000);
 
 }
 
+
+
+
 /* DADO */
 
 function createDiceMaterial(number){
@@ -375,6 +382,17 @@ let charityTurns = [0,0];
 /* ECONOMIA */
 
 let money=[5000,5000];
+
+let assets = [
+{
+realEstate: [],
+business: []
+},
+{
+realEstate: [],
+business: []
+}
+];
 
 const smallDeals = [
 
@@ -483,6 +501,26 @@ children1.innerText=exp.children;
 expenseTotal1.innerText=expenseTotal;
 
 cashflow1.innerText=incomeTotal-expenseTotal;
+
+assets1.innerHTML = getAssetsList(0);
+
+}
+
+function getAssetsList(player){
+
+let list = "";
+
+assets[player].realEstate.forEach(a=>{
+list += "🏠 " + a.name + " | +" + a.cashflow + "<br>";
+});
+
+assets[player].business.forEach(a=>{
+list += "🏢 " + a.name + " | +" + a.cashflow + "<br>";
+});
+
+if(list === "") list = "Sin activos";
+
+return list;
 
 }
 
@@ -619,7 +657,14 @@ decisionActions.push(function(){
 if(money[currentPlayer] >= deal.cost){
 
 money[currentPlayer] -= deal.cost;
+
 income[currentPlayer].realEstate += deal.cashflow;
+
+assets[currentPlayer].realEstate.push({
+name: deal.title,
+cashflow: deal.cashflow,
+cost: deal.cost
+});
 
 animateValueChange("cashflow1", deal.cashflow);
 
@@ -679,7 +724,14 @@ decisionActions.push(function(){
 if(money[currentPlayer] >= deal.cost){
 
 money[currentPlayer] -= deal.cost;
+
 income[currentPlayer].business += deal.cashflow;
+
+assets[currentPlayer].business.push({
+name: deal.title,
+cashflow: deal.cashflow,
+cost: deal.cost
+});
 
 animateValueChange("cashflow1", deal.cashflow);
 
