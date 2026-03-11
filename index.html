@@ -644,32 +644,39 @@ return;
 
 }
 
+/* PAYDAY */
 if(type === "payday"){
 
-const salary = income[currentPlayer].salary;
+    // 1. Verificamos si está desempleado primero
+    if(downsizedTurns[currentPlayer] > 0){
+        downsizedTurns[currentPlayer]--;
+        showCard(
+            "DESEMPLEADO",
+            `Sigues desempleado.<br>Turnos restantes sin salario: ${downsizedTurns[currentPlayer]}`
+        );
+        return; // Salimos de la función para que no cobre el salario
+    }
 
-money[currentPlayer] += salary;
+    // 2. Si NO está desempleado, procesamos el pago (SIN repetir el IF)
+    const salary = income[currentPlayer].salary;
+    const interestPayment = loans[currentPlayer] * bankInterestRate;
 
-/* pago de intereses al banco */
+    money[currentPlayer] += salary;
+    money[currentPlayer] -= interestPayment;
 
-const interestPayment = loans[currentPlayer] * bankInterestRate;
+    /* animaciones solo si es el jugador 1 */
+    if(currentPlayer === 0) {
+        animateValueChange("money1", salary);
+        setTimeout(() => animateValueChange("money1", -interestPayment), 500);
+    }
 
-money[currentPlayer] -= interestPayment;
+    showCard(
+        "PAYDAY",
+        `Salario recibido: $${salary}<br>Intereses banco: $${interestPayment}`
+    );
 
-/* animaciones */
+} // <-- ESTA LLAVE CIERRA TODO EL BLOQUE PAYDAY
 
-animateValueChange("money1", salary);
-animateValueChange("money1", -interestPayment);
-
-showCard(
-"PAYDAY",
-`
-Salario recibido: $${salary}<br>
-Intereses banco: $${interestPayment}
-`
-);
-
-}
 
 /* SMALL DEAL */
 
@@ -901,6 +908,7 @@ Durante 3 turnos podrás lanzar 2 dados
 expenses[currentPlayer].other =
 Math.max(0, expenses[currentPlayer].other - 50);
 
+}
 }
 
 /* TURNOS */
