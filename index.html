@@ -169,6 +169,7 @@ case "market": return 0xf1c40f;
 case "charity": return 0xffffff;
 case "doodad": return 0xe74c3c;
 case "child": return 0xff69b4;
+case "downsized": return 0x555555;
 
 default: return 0x888888;
 
@@ -188,8 +189,9 @@ if(r<0.65) return "bigDeal";
 if(r<0.75) return "market";
 if(r<0.90) return "doodad";
 if(r<0.93) return "charity";
+if(r<0.96) return "child";
 
-return "child";
+return "downsize";
 
 }
 
@@ -365,6 +367,8 @@ const player2=createPlayer(0xff4444);
 
 let positions=[0,0];
 let waitingCard = false;
+
+let downsizedTurns = [0,0];
 
 /* ECONOMIA */
 
@@ -568,6 +572,22 @@ const type = tileTypes[index];
 
 if(type === "payday"){
 
+if(downsizedTurns[currentPlayer] > 0){
+
+downsizedTurns[currentPlayer]--;
+
+showCard(
+"DESEMPLEADO",
+`
+Sigues desempleado.<br>
+Turnos restantes sin salario: ${downsizedTurns[currentPlayer]}
+`
+);
+
+return;
+
+}
+
 const salary = income[currentPlayer].salary;
 
 money[currentPlayer] += salary;
@@ -623,6 +643,22 @@ Flujo de caja: $${deal.cashflow}<br><br>
 yesIndex,
 noIndex
 
+);
+
+}
+
+/* DOWNSIZED */
+
+if(type === "downsized"){
+
+downsizedTurns[currentPlayer] = 2;
+
+showCard(
+"DOWNSIZED",
+`
+¡Has perdido tu trabajo!<br><br>
+Durante 2 turnos no recibirás salario.
+`
 );
 
 }
