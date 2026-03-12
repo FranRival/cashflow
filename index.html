@@ -200,7 +200,7 @@ if(r<0.90) return "doodad";
 if(r<0.93) return "charity";
 if(r<0.96) return "child";
 
-return "downsize";
+return "downsized";
 
 }
 
@@ -506,6 +506,7 @@ credit1.innerText=exp.creditCard;
 retail1.innerText=exp.retail;
 other1.innerText=exp.other;
 children1.innerText=exp.children;
+childcount1.innerText=childrenCount[0];
 
 expenseTotal1.innerText=expenseTotal;
 
@@ -605,6 +606,7 @@ if(decisionActions[index]){
 decisionActions[index]();
 }
 
+decisionActions = []; //reset
 card.style.display="none";
 waitingCard=false;
 
@@ -861,7 +863,10 @@ const cost = 700;
 
 money[currentPlayer] =
 Math.max(0, money[currentPlayer] - cost);
+
+if(currentPlayer === 0){
 animateValueChange("money1", -cost);
+}
 
 showCard(
 "DOODAD",
