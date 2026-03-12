@@ -585,6 +585,7 @@ card.style.display="block";
 }
 
 function showDecision(title, body, yesAction, noAction){
+    
 
 waitingCard = true;
 
@@ -633,29 +634,8 @@ const type = tileTypes[index];
 
 /* PAYDAY */
 
-
 if(type === "payday"){
 
-if(downsizedTurns[currentPlayer] > 0){
-
-downsizedTurns[currentPlayer]--;
-
-showCard(
-"DESEMPLEADO",
-`
-Sigues desempleado.<br>
-Turnos restantes sin salario: ${downsizedTurns[currentPlayer]}
-`
-);
-
-return;
-
-}
-
-/* PAYDAY */
-if(type === "payday"){
-
-// si está desempleado
 if(downsizedTurns[currentPlayer] > 0){
 
 downsizedTurns[currentPlayer]--;
@@ -670,16 +650,14 @@ return;
 
 }
 
-// salario
 const salary = income[currentPlayer].salary;
-
-// intereses banco
 const interestPayment = loans[currentPlayer] * bankInterestRate;
 
 money[currentPlayer] += salary;
-money[currentPlayer] -= interestPayment;
 
-// animaciones solo jugador humano
+money[currentPlayer] =
+Math.max(0, money[currentPlayer] - interestPayment);
+
 if(currentPlayer === 0){
 
 animateValueChange("money1", salary);
@@ -699,6 +677,8 @@ Intereses banco: $${interestPayment}`
 return;
 
 }
+
+
 
 
 /* SMALL DEAL */
@@ -796,6 +776,15 @@ if(money[currentPlayer] >= deal.cost){
 
 money[currentPlayer] -= deal.cost;
 
+}else{
+
+const needed = deal.cost - money[currentPlayer];
+takeLoan(currentPlayer, needed);
+
+money[currentPlayer] -= deal.cost;
+
+}
+
 income[currentPlayer].business += deal.cashflow;
 
 assets[currentPlayer].business.push({
@@ -808,9 +797,9 @@ if(currentPlayer === 0){
 animateValueChange("cashflow1", deal.cashflow);
 }
 
-}
-
 });
+
+
 
 const noIndex = decisionActions.length;
 
@@ -845,9 +834,16 @@ const yesIndex = decisionActions.length;
 
 decisionActions.push(function(){
 
+
 if(event.effect === "realEstateDouble"){
 income[currentPlayer].realEstate += 250;
+
+if(currentPlayer === 0){
+animateValueChange("cashflow1",250);
 }
+
+}
+
 
 if(event.effect === "realEstateHalf"){
 income[currentPlayer].realEstate =
@@ -924,6 +920,10 @@ const cost = 300;
 money[currentPlayer] =
 Math.max(0, money[currentPlayer] - cost);
 
+if(currentPlayer === 0){
+animateValueChange("money1",-cost);
+}
+
 charityTurns[currentPlayer] = 3;
 
 showCard(
@@ -981,6 +981,8 @@ movePlayer(result);
 }
 
 function aiTurn(){
+
+if(waitingCard) return;
 
 setTimeout(()=>{
 
