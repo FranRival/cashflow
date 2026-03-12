@@ -523,7 +523,9 @@ function takeLoan(player, amount){
 loans[player] += amount;
 money[player] += amount;
 
+if(player === 0){
 animateValueChange("money1", amount);
+}
 
 }
 
@@ -653,35 +655,50 @@ return;
 /* PAYDAY */
 if(type === "payday"){
 
-    // 1. Verificamos si está desempleado primero
-    if(downsizedTurns[currentPlayer] > 0){
-        downsizedTurns[currentPlayer]--;
-        showCard(
-            "DESEMPLEADO",
-            `Sigues desempleado.<br>Turnos restantes sin salario: ${downsizedTurns[currentPlayer]}`
-        );
-        return; // Salimos de la función para que no cobre el salario
-    }
+// si está desempleado
+if(downsizedTurns[currentPlayer] > 0){
 
-    // 2. Si NO está desempleado, procesamos el pago (SIN repetir el IF)
-    const salary = income[currentPlayer].salary;
-    const interestPayment = loans[currentPlayer] * bankInterestRate;
+downsizedTurns[currentPlayer]--;
 
-    money[currentPlayer] += salary;
-    money[currentPlayer] -= interestPayment;
+showCard(
+"DESEMPLEADO",
+`Sigues desempleado.<br>
+Turnos restantes: ${downsizedTurns[currentPlayer]}`
+);
 
-    /* animaciones solo si es el jugador 1 */
-    if(currentPlayer === 0) {
-        animateValueChange("money1", salary);
-        setTimeout(() => animateValueChange("money1", -interestPayment), 500);
-    }
+return;
 
-    showCard(
-        "PAYDAY",
-        `Salario recibido: $${salary}<br>Intereses banco: $${interestPayment}`
-    );
+}
 
-} // <-- ESTA LLAVE CIERRA TODO EL BLOQUE PAYDAY
+// salario
+const salary = income[currentPlayer].salary;
+
+// intereses banco
+const interestPayment = loans[currentPlayer] * bankInterestRate;
+
+money[currentPlayer] += salary;
+money[currentPlayer] -= interestPayment;
+
+// animaciones solo jugador humano
+if(currentPlayer === 0){
+
+animateValueChange("money1", salary);
+
+setTimeout(()=>{
+animateValueChange("money1", -interestPayment);
+},500);
+
+}
+
+showCard(
+"PAYDAY",
+`Salario recibido: $${salary}<br>
+Intereses banco: $${interestPayment}`
+);
+
+return;
+
+}
 
 
 /* SMALL DEAL */
@@ -718,7 +735,9 @@ cashflow: deal.cashflow,
 cost: deal.cost
 });
 
+if(currentPlayer === 0){
 animateValueChange("cashflow1", deal.cashflow);
+}
 
 }
 
@@ -785,7 +804,9 @@ cashflow: deal.cashflow,
 cost: deal.cost
 });
 
+if(currentPlayer === 0){
 animateValueChange("cashflow1", deal.cashflow);
+}
 
 }
 
@@ -832,7 +853,7 @@ if(event.effect === "realEstateHalf"){
 income[currentPlayer].realEstate =
 Math.floor(income[currentPlayer].realEstate * 0.7);
 }
-
+updateUI();
 });
 
 const noIndex = decisionActions.length;
@@ -896,7 +917,6 @@ Tus gastos aumentan $150
 
 /* CHARITY */
 
-
 if(type === "charity"){
 
 const cost = 300;
@@ -918,6 +938,7 @@ expenses[currentPlayer].other =
 Math.max(0, expenses[currentPlayer].other - 50);
 
 }
+
 }
 
 /* TURNOS */
