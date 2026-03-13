@@ -501,6 +501,40 @@ return incomeTotal - expenseTotal;
 
 }
 
+function getPassiveIncome(player){
+
+const inc = income[player];
+
+return (
+inc.realEstate +
+inc.interest +
+inc.dividends +
+inc.business +
+inc.otherAssets
+);
+
+}
+
+function checkVictory(player){
+
+const passive = getPassiveIncome(player);
+
+if(passive >= 50000){
+
+showCard(
+"🎉 VICTORIA",
+`
+Has ganado el juego.<br><br>
+Ingreso pasivo: $${passive}
+`
+);
+
+waitingCard = true;
+
+}
+
+}
+
 //salir de la carrera de la rata
 function checkRatRaceExit(player){
 
@@ -1171,6 +1205,7 @@ resolveTile(positions[currentPlayer]);
 
 updateUI();
 
+checkVictory(currentPlayer);
 
 return
 
