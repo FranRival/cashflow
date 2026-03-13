@@ -447,10 +447,12 @@ const fastTrackDeals = [
 
 ];
 
+
 const marketCards = [
 
 {title:"Boom inmobiliario",effect:"realEstateDouble"},
-{title:"Crash de mercado",effect:"realEstateHalf"}
+{title:"Crash de mercado",effect:"realEstateHalf"},
+{title:"Oferta de mercado",effect:"sellAssetOffer"}
 
 ];
 
@@ -649,9 +651,55 @@ if(list === "") list = "Sin activos";
 
 return list;
 
+}
 
+function getAssetsList(player){
+
+let list = "";
+
+assets[player].realEstate.forEach((a,i)=>{
+list += `🏠 ${a.name} | +${a.cashflow} 
+<button onclick="sellAsset(${player},'realEstate',${i})">Vender</button><br>`;
+});
+
+assets[player].business.forEach((a,i)=>{
+list += `🏢 ${a.name} | +${a.cashflow} 
+<button onclick="sellAsset(${player},'business',${i})">Vender</button><br>`;
+});
+
+if(list === "") list = "Sin activos";
+
+return list;
 
 }
+
+function sellAsset(player,type,index){
+
+const asset = assets[player][type][index];
+
+money[player] += asset.cost;
+
+income[player][type] -= asset.cashflow;
+
+assets[player][type].splice(index,1);
+
+if(player === 0){
+animateValueChange("money1", asset.cost);
+}
+
+updateUI();
+
+showCard(
+"VENTA DE ACTIVO",
+`Vendiste ${asset.name}<br>
+Recibes $${asset.cost}<br>
+Pierdes flujo de caja de $${asset.cashflow}`
+);
+
+}
+
+
+
 
 function animateValueChange(elementId, change){
 
@@ -970,6 +1018,88 @@ showDecision(
 `
 ${event.title}<br><br>
 ¿Tomar oportunidad?
+`,
+
+yesIndex,
+noIndex
+
+);
+
+}
+
+if(event.effect === "sellAssetOffer"){
+
+const playerAssets = [
+...assets[currentPlayer].realEstate,
+...assets[currentPlayer].business
+];
+
+if(playerAssets.length === 0){
+
+showCard(
+"MERCADO",
+"No tienes activos para vender."
+);
+
+return;
+
+}
+
+const asset =
+playerAssets[Math.floor(Math.random()*playerAssets.length)];
+
+const offerPrice = Math.floor(asset.cost * (1.5 + Math.random()));
+
+const yesIndex = decisionActions.length;
+
+decisionActions.push(function(){
+
+money[currentPlayer] += offerPrice;
+
+if(currentPlayer === 0){
+animateValueChange("money1", offerPrice);
+}
+
+// quitar activo
+
+let list = assets[currentPlayer].realEstate;
+let index = list.findIndex(a=>a.name===asset.name);
+
+if(index !== -1){
+
+income[currentPlayer].realEstate -= asset.cashflow;
+list.splice(index,1);
+
+}else{
+
+list = assets[currentPlayer].business;
+index = list.findIndex(a=>a.name===asset.name);
+
+if(index !== -1){
+
+income[currentPlayer].business -= asset.cashflow;
+list.splice(index,1);
+
+}
+
+}
+
+});
+
+const noIndex = decisionActions.length;
+
+decisionActions.push(function(){});
+
+showDecision(
+
+"OFERTA DE MERCADO",
+
+`
+Quieren comprar tu activo:<br><br>
+${asset.name}<br>
+Costo original: $${asset.cost}<br>
+Oferta: $${offerPrice}<br><br>
+¿Aceptar venta?
 `,
 
 yesIndex,
