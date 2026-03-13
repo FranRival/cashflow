@@ -74,6 +74,8 @@ Total gastos: $<span id="expenseTotal1"></span>
 <br><br>
 
 Flujo de caja: $<span id="cashflow1"></span>
+<br>
+Estado: <span id="status1"></span>
 <br><br>
 
 ACTIVOS<br>
@@ -386,6 +388,7 @@ let waitingCard = false;
 let downsizedTurns = [0,0];
 
 let charityTurns = [0,0];
+let fastTrack = [false,false];
 
 /* ECONOMIA */
 
@@ -477,6 +480,30 @@ exp.children;
 return incomeTotal - expenseTotal;
 
 }
+
+//salir de la carrera de la rata
+function checkRatRaceExit(player){
+
+const cashflow = getCashflow(player);
+
+if(!fastTrack[player] && cashflow > 0){
+
+fastTrack[player] = true;
+
+showCard(
+"FAST TRACK",
+`
+¡Has salido de la carrera de la rata! 🚀<br><br>
+Tu flujo de caja es positivo.<br>
+Ahora juegas en modo inversión rápida.
+`
+);
+
+}
+
+}
+
+
 /* UI */
 
 function updateUI(){
@@ -529,6 +556,8 @@ cashflow1.innerText=incomeTotal-expenseTotal;
 
 assets1.innerHTML = getAssetsList(0);
 loan1.innerText = loans[0];
+
+status1.innerText = fastTrack[0] ? "FAST TRACK 🚀" : "RAT RACE";
 
 }
 
@@ -675,6 +704,7 @@ const salary = income[currentPlayer].salary;
 const interestPayment = loans[currentPlayer] * bankInterestRate;
 
 money[currentPlayer] += salary;
+checkRatRaceExit(currentPlayer);
 
 money[currentPlayer] =
 Math.max(0, money[currentPlayer] - interestPayment);
@@ -1050,7 +1080,15 @@ Turnos restantes: ${charityTurns[currentPlayer]}
 
 }else{
 
+if(fastTrack[currentPlayer]){
+
+result = Math.floor(Math.random()*6)+1 + 3;
+
+}else{
+
 result = Math.floor(Math.random()*6)+1;
+
+}
 
 }
 
