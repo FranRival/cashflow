@@ -319,7 +319,18 @@ tiles[positions[1]].body.material.emissive.set(0xff0000);
 
 }
 
+//color direrente de fast track.  
+function activateFastTrackVisual(){
 
+for(let i=0;i<tiles.length;i++){
+
+tiles[i].body.material.color.set(0xffd700); // color dorado
+
+}
+
+scene.background = new THREE.Color(0x001122); // fondo diferente
+
+}
 
 
 /* DADO */
@@ -498,6 +509,8 @@ const cashflow = getCashflow(player);
 if(!fastTrack[player] && cashflow > 0){
 
 fastTrack[player] = true;
+
+activateFastTrackVisual()
 
 showCard(
 "FAST TRACK",
