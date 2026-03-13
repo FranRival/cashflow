@@ -427,6 +427,15 @@ const bigDeals = [
 
 ];
 
+const fastTrackDeals = [
+
+{title:"Hotel Resort", cost:200000, cashflow:10000},
+{title:"Cadena de restaurantes", cost:150000, cashflow:8000},
+{title:"Startup tecnológica", cost:120000, cashflow:9000},
+{title:"Centro comercial gigante", cost:500000, cashflow:20000}
+
+];
+
 const marketCards = [
 
 {title:"Boom inmobiliario",effect:"realEstateDouble"},
@@ -736,8 +745,9 @@ return;
 
 if(type === "smallDeal"){
 
-const deal =
-smallDeals[Math.floor(Math.random()*smallDeals.length)];
+const deal = fastTrack[currentPlayer]
+? fastTrackDeals[Math.floor(Math.random()*fastTrackDeals.length)]
+: smallDeals[Math.floor(Math.random()*smallDeals.length)];
 
 const yesIndex = decisionActions.length;
 
@@ -814,8 +824,9 @@ Durante 2 turnos no recibirás salario.
 
 if(type === "bigDeal"){
 
-const deal =
-bigDeals[Math.floor(Math.random()*bigDeals.length)];
+const deal = fastTrack[currentPlayer]
+? fastTrackDeals[Math.floor(Math.random()*fastTrackDeals.length)]
+: bigDeals[Math.floor(Math.random()*bigDeals.length)];
 
 const yesIndex = decisionActions.length;
 
@@ -856,7 +867,7 @@ decisionActions.push(function(){});
 
 showDecision(
 
-"BIG DEAL",
+fastTrack[currentPlayer] ? "FAST TRACK INVESTMENT" : "BIG DEAL",
 
 `
 Activo: ${deal.title}<br>
