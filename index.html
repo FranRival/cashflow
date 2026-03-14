@@ -76,6 +76,8 @@ Total gastos: $<span id="expenseTotal1"></span>
 Flujo de caja: $<span id="cashflow1"></span>
 <br>
 Estado: <span id="status1"></span>
+<br>
+Patrimonio neto: $<span id="networth1"></span>
 <br><br>
 
 ACTIVOS<br>
@@ -404,6 +406,7 @@ let fastTrack = [false,false];
 /* ECONOMIA */
 
 let money=[5000,5000];
+let marketState = "normal";
 
 //banco
 let loans = [0,0];
@@ -450,9 +453,10 @@ const fastTrackDeals = [
 
 const marketCards = [
 
-{title:"Boom inmobiliario",effect:"realEstateDouble"},
-{title:"Crash de mercado",effect:"realEstateHalf"},
-{title:"Oferta de mercado",effect:"sellAssetOffer"}
+{title:"Boom inmobiliario", effect:"boom"},
+{title:"Crash de mercado", effect:"crash"},
+{title:"Oferta de mercado", effect:"sellAssetOffer"},
+{title:"Mercado estable", effect:"normal"}
 
 ];
 
@@ -516,6 +520,31 @@ inc.otherAssets
 );
 
 }
+
+function getNetWorth(player){
+
+let totalAssets = 0;
+
+// bienes raíces
+assets[player].realEstate.forEach(a=>{
+totalAssets += a.cost;
+});
+
+// negocios
+assets[player].business.forEach(a=>{
+totalAssets += a.cost;
+});
+
+// acciones
+assets[player].stocks.forEach(a=>{
+totalAssets += a.price * a.shares;
+});
+
+return totalAssets + money[player] - loans[player];
+
+}
+
+
 
 function checkVictory(player){
 
@@ -616,6 +645,7 @@ assets1.innerHTML = getAssetsList(0);
 loan1.innerText = loans[0];
 
 status1.innerText = fastTrack[0] ? "FAST TRACK 🚀" : "RAT RACE";
+networth1.innerText = getNetWorth(0);
 
 }
 
@@ -653,25 +683,7 @@ return list;
 
 }
 
-function getAssetsList(player){
 
-let list = "";
-
-assets[player].realEstate.forEach((a,i)=>{
-list += `🏠 ${a.name} | +${a.cashflow} 
-<button onclick="sellAsset(${player},'realEstate',${i})">Vender</button><br>`;
-});
-
-assets[player].business.forEach((a,i)=>{
-list += `🏢 ${a.name} | +${a.cashflow} 
-<button onclick="sellAsset(${player},'business',${i})">Vender</button><br>`;
-});
-
-if(list === "") list = "Sin activos";
-
-return list;
-
-}
 
 function sellAsset(player,type,index){
 
@@ -844,6 +856,13 @@ const deal = fastTrack[currentPlayer]
 ? fastTrackDeals[Math.floor(Math.random()*fastTrackDeals.length)]
 : smallDeals[Math.floor(Math.random()*smallDeals.length)];
 
+let priceMultiplier = 1;
+
+if(marketState === "boom") priceMultiplier = 1.5;
+if(marketState === "crash") priceMultiplier = 0.6;
+
+deal.cost = Math.floor(deal.cost * priceMultiplier);
+
 const yesIndex = decisionActions.length;
 
 decisionActions.push(function(){
@@ -923,6 +942,13 @@ const deal = fastTrack[currentPlayer]
 ? fastTrackDeals[Math.floor(Math.random()*fastTrackDeals.length)]
 : bigDeals[Math.floor(Math.random()*bigDeals.length)];
 
+let priceMultiplier = 1;
+
+if(marketState === "boom") priceMultiplier = 1.5;
+if(marketState === "crash") priceMultiplier = 0.6;
+
+deal.cost = Math.floor(deal.cost * priceMultiplier);
+
 const yesIndex = decisionActions.length;
 
 decisionActions.push(function(){
@@ -984,6 +1010,19 @@ if(type === "market"){
 
 const event =
 marketCards[Math.floor(Math.random()*marketCards.length)];
+
+// cambiar estado del mercado
+if(event.effect === "boom"){
+marketState = "boom";
+}
+
+if(event.effect === "crash"){
+marketState = "crash";
+}
+
+if(event.effect === "normal"){
+marketState = "normal";
+}
 
 const yesIndex = decisionActions.length;
 
