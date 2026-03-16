@@ -469,6 +469,68 @@ const stockCards = [
 
 ];
 
+function checkBankruptcy(player){
+
+if(money[player] >= 0) return;
+
+// intentar vender activos automáticamente
+
+while(money[player] < 0){
+
+let asset = null;
+let type = "";
+
+// vender primero acciones
+if(assets[player].stocks.length > 0){
+
+asset = assets[player].stocks.pop();
+money[player] += asset.price * asset.shares;
+
+continue;
+
+}
+
+// luego bienes raíces
+if(assets[player].realEstate.length > 0){
+
+asset = assets[player].realEstate.pop();
+money[player] += asset.cost;
+
+income[player].realEstate -= asset.cashflow;
+
+continue;
+
+}
+
+// luego negocios
+if(assets[player].business.length > 0){
+
+asset = assets[player].business.pop();
+money[player] += asset.cost;
+
+income[player].business -= asset.cashflow;
+
+continue;
+
+}
+
+// si no quedan activos → bancarrota real
+showCard(
+"BANCARROTA",
+`
+No puedes pagar tus deudas.<br><br>
+Has perdido el juego.
+`
+);
+
+waitingCard = true;
+
+return;
+
+}
+
+}
+
 let income=[
 {salary:1000,realEstate:0,interest:0,dividends:0,business:0,otherAssets:0},
 {salary:1000,realEstate:0,interest:0,dividends:0,business:0,otherAssets:0}
@@ -822,8 +884,7 @@ const interestPayment = loans[currentPlayer] * bankInterestRate;
 money[currentPlayer] += salary;
 checkRatRaceExit(currentPlayer);
 
-money[currentPlayer] =
-Math.max(0, money[currentPlayer] - interestPayment);
+money[currentPlayer] -= interestPayment;
 
 if(currentPlayer === 0){
 
@@ -1154,8 +1215,8 @@ if(type === "doodad"){
 
 const cost = 700;
 
-money[currentPlayer] =
-Math.max(0, money[currentPlayer] - cost);
+
+money[currentPlayer] -= cost;
 
 if(currentPlayer === 0){
 animateValueChange("money1", -cost);
@@ -1370,7 +1431,10 @@ function stepMove(){
 
 if(step>=steps){
 
+
 resolveTile(positions[currentPlayer]);
+
+checkBankruptcy(currentPlayer);
 
 updateUI();
 
