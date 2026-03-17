@@ -198,14 +198,13 @@ function randomTileType(){
 const r=Math.random();
 
 if(r<0.2) return "payday";
-if(r<0.55) return "smallDeal";
-if(r<0.65) return "bigDeal";
-if(r<0.75) return "market";
-if(r<0.90) return "doodad";
+if(r<0.5) return "smallDeal";
+if(r<0.6) return "bigDeal";
+if(r<0.7) return "market";
+if(r<0.8) return "stock";
+if(r<0.9) return "doodad";
 if(r<0.93) return "charity";
 if(r<0.96) return "child";
-if(r<0.85) return "stock";
-
 
 return "downsized";
 
@@ -462,10 +461,10 @@ const marketCards = [
 
 const stockCards = [
 
-{name:"TechCorp", price:10},
-{name:"BioHealth", price:20},
-{name:"GreenEnergy", price:15},
-{name:"AutoFuture", price:8}
+{name:"TechCorp", price:10, dividend:0.5},
+{name:"BioHealth", price:20, dividend:1},
+{name:"GreenEnergy", price:15, dividend:0.7},
+{name:"AutoFuture", price:8, dividend:0.3}
 
 ];
 
@@ -484,7 +483,8 @@ let type = "";
 if(assets[player].stocks.length > 0){
 
 asset = assets[player].stocks.pop();
-money[player] += asset.price * asset.shares;
+const current = stockCards.find(s=>s.name === asset.name);
+money[player] += current.price * asset.shares;
 
 continue;
 
@@ -569,6 +569,25 @@ return incomeTotal - expenseTotal;
 
 }
 
+
+function updateStockPrices(){
+
+stockCards.forEach(stock=>{
+
+let change = (Math.random() - 0.5) * 0.2; // -10% a +10%
+
+if(marketState === "boom") change += 0.1;
+if(marketState === "crash") change -= 0.1;
+
+stock.price = Math.max(1, Math.floor(stock.price * (1 + change)));
+
+});
+
+}
+
+
+
+
 function getPassiveIncome(player){
 
 const inc = income[player];
@@ -599,7 +618,8 @@ totalAssets += a.cost;
 
 // acciones
 assets[player].stocks.forEach(a=>{
-totalAssets += a.price * a.shares;
+const current = stockCards.find(s=>s.name === a.name);
+totalAssets += current.price * a.shares;
 });
 
 return totalAssets + money[player] - loans[player];
@@ -736,7 +756,15 @@ list += "🏢 " + a.name + " | +" + a.cashflow + "<br>";
 });
 
 assets[player].stocks.forEach(a=>{
-list += "📈 " + a.name + " | " + a.shares + " acciones<br>";
+
+const current = stockCards.find(s=>s.name === a.name);
+
+const currentValue = current.price * a.shares;
+const cost = a.buyPrice * a.shares;
+const profit = currentValue - cost;
+
+list += `📈 ${a.name} | ${a.shares} acciones 
+($${currentValue}) ${profit >= 0 ? "🟢" : "🔴"}<br>`;
 });
 
 if(list === "") list = "Sin activos";
@@ -748,6 +776,32 @@ return list;
 
 
 function sellAsset(player,type,index){
+    
+    if(type === "stocks"){
+
+const asset = assets[player].stocks[index];
+const current = stockCards.find(s=>s.name === asset.name);
+
+const value = current.price * asset.shares;
+
+money[player] += value;
+
+assets[player].stocks.splice(index,1);
+
+if(player === 0){
+animateValueChange("money1", value);
+}
+
+updateUI();
+
+showCard(
+"VENTA DE ACCIONES",
+`Vendiste ${asset.name}<br>
+Recibes $${value}`
+);
+
+return;
+}
 
 const asset = assets[player][type][index];
 
@@ -881,32 +935,72 @@ return;
 const salary = income[currentPlayer].salary;
 const interestPayment = loans[currentPlayer] * bankInterestRate;
 
-money[currentPlayer] += salary;
-checkRatRaceExit(currentPlayer);
+/* ===== DIVIDENDOS (FIX) ===== */
+
+let dividendIncome = 0;
+
+assets[currentPlayer].stocks.forEach(s=>{
+const stock = stockCards.find(st=>st.name === s.name);
+if(stock){
+dividendIncome += s.shares * stock.dividend;
+}
+});
+
+/* ===== APLICAR DINERO ===== */
+
+money[currentPlayer] += salary + dividendIncome;
+
+income[currentPlayer].dividends = dividendIncome;
+
+/* ===== INTERESES ===== */
 
 money[currentPlayer] -= interestPayment;
+
+checkRatRaceExit(currentPlayer);
+
+/* ===== UI ===== */
 
 if(currentPlayer === 0){
 
 animateValueChange("money1", salary);
 
+if(dividendIncome > 0){
+setTimeout(()=>{
+animateValueChange("money1", dividendIncome);
+},300);
+}
+
 setTimeout(()=>{
 animateValueChange("money1", -interestPayment);
-},500);
+},600);
 
 }
 
 showCard(
 "PAYDAY",
-`Salario recibido: $${salary}<br>
+`Salario: $${salary}<br>
+Dividendos: $${dividendIncome}<br>
 Intereses banco: $${interestPayment}`
 );
 
 return;
-
 }
 
 
+// DIVIDENDOS
+let dividendIncome = 0;
+
+assets[currentPlayer].stocks.forEach(s=>{
+dividendIncome += s.shares * s.price * 0.05;
+});
+
+money[currentPlayer] += dividendIncome;
+
+income[currentPlayer].dividends = dividendIncome;
+
+if(currentPlayer === 0 && dividendIncome > 0){
+animateValueChange("money1", dividendIncome);
+}
 
 
 /* SMALL DEAL */
@@ -1073,59 +1167,24 @@ const event =
 marketCards[Math.floor(Math.random()*marketCards.length)];
 
 // cambiar estado del mercado
-if(event.effect === "boom"){
-marketState = "boom";
-}
+if(event.effect === "boom") marketState = "boom";
+if(event.effect === "crash") marketState = "crash";
+if(event.effect === "normal") marketState = "normal";
 
-if(event.effect === "crash"){
-marketState = "crash";
-}
 
-if(event.effect === "normal"){
-marketState = "normal";
-}
-
-const yesIndex = decisionActions.length;
-
-decisionActions.push(function(){
-
+// ===== EFECTOS =====
 
 if(event.effect === "realEstateDouble"){
 income[currentPlayer].realEstate += 250;
-
-if(currentPlayer === 0){
-animateValueChange("cashflow1",250);
 }
-
-}
-
 
 if(event.effect === "realEstateHalf"){
 income[currentPlayer].realEstate =
 Math.floor(income[currentPlayer].realEstate * 0.7);
 }
-updateUI();
-});
 
-const noIndex = decisionActions.length;
 
-decisionActions.push(function(){});
-
-showDecision(
-
-"MARKET",
-
-`
-${event.title}<br><br>
-¿Tomar oportunidad?
-`,
-
-yesIndex,
-noIndex
-
-);
-
-}
+// ===== OFERTA DE VENTA =====
 
 if(event.effect === "sellAssetOffer"){
 
@@ -1136,13 +1195,8 @@ const playerAssets = [
 
 if(playerAssets.length === 0){
 
-showCard(
-"MERCADO",
-"No tienes activos para vender."
-);
-
+showCard("MERCADO","No tienes activos para vender.");
 return;
-
 }
 
 const asset =
@@ -1160,40 +1214,29 @@ if(currentPlayer === 0){
 animateValueChange("money1", offerPrice);
 }
 
-// quitar activo
-
 let list = assets[currentPlayer].realEstate;
 let index = list.findIndex(a=>a.name===asset.name);
 
 if(index !== -1){
-
 income[currentPlayer].realEstate -= asset.cashflow;
 list.splice(index,1);
-
 }else{
-
 list = assets[currentPlayer].business;
 index = list.findIndex(a=>a.name===asset.name);
 
 if(index !== -1){
-
 income[currentPlayer].business -= asset.cashflow;
 list.splice(index,1);
-
 }
-
 }
 
 });
 
 const noIndex = decisionActions.length;
-
 decisionActions.push(function(){});
 
 showDecision(
-
 "OFERTA DE MERCADO",
-
 `
 Quieren comprar tu activo:<br><br>
 ${asset.name}<br>
@@ -1201,12 +1244,22 @@ Costo original: $${asset.cost}<br>
 Oferta: $${offerPrice}<br><br>
 ¿Aceptar venta?
 `,
-
 yesIndex,
 noIndex
-
 );
 
+return;
+}
+
+
+// ===== EVENTO NORMAL =====
+
+showCard(
+"MARKET",
+`${event.title}`
+);
+
+return;
 }
 
 /* DOODAD */
@@ -1273,7 +1326,7 @@ money[currentPlayer] -= totalCost;
 assets[currentPlayer].stocks.push({
 name: stock.name,
 shares: shares,
-price: stock.price
+buyPrice: stock.price
 });
 
 if(currentPlayer === 0){
@@ -1313,8 +1366,7 @@ if(type === "charity"){
 
 const cost = 300;
 
-money[currentPlayer] =
-Math.max(0, money[currentPlayer] - cost);
+money[currentPlayer] -= cost;
 
 if(currentPlayer === 0){
 animateValueChange("money1",-cost);
@@ -1433,6 +1485,7 @@ if(step>=steps){
 
 
 resolveTile(positions[currentPlayer]);
+updateStockPrices();
 
 checkBankruptcy(currentPlayer);
 
