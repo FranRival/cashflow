@@ -848,21 +848,19 @@ const yesIndex = decisionActions.length;
 
 decisionActions.push(function(){
 
+// IA decide
+if(currentPlayer === 1){
+if(!aiShouldBuy(currentPlayer, deal)) return;
+}
+
 if(money[currentPlayer] >= deal.cost){
-
 money[currentPlayer] -= deal.cost;
 income[currentPlayer].realEstate += deal.cashflow;
-
 }else{
-
 const needed = deal.cost - money[currentPlayer];
-
 takeLoan(currentPlayer, needed);
-
 money[currentPlayer] -= deal.cost;
-
 income[currentPlayer].realEstate += deal.cashflow;
-
 }
 
 assets[currentPlayer].realEstate.push({
@@ -870,10 +868,6 @@ name: deal.title,
 cashflow: deal.cashflow,
 cost: deal.cost
 });
-
-if(currentPlayer === 0){
-animateValueChange("cashflow1", deal.cashflow);
-}
 
 });
 
@@ -927,17 +921,16 @@ const yesIndex = decisionActions.length;
 
 decisionActions.push(function(){
 
+if(currentPlayer === 1){
+if(!aiShouldBuy(currentPlayer, deal)) return;
+}
+
 if(money[currentPlayer] >= deal.cost){
-
 money[currentPlayer] -= deal.cost;
-
 }else{
-
 const needed = deal.cost - money[currentPlayer];
 takeLoan(currentPlayer, needed);
-
 money[currentPlayer] -= deal.cost;
-
 }
 
 income[currentPlayer].business += deal.cashflow;
@@ -947,10 +940,6 @@ name: deal.title,
 cashflow: deal.cashflow,
 cost: deal.cost
 });
-
-if(currentPlayer === 0){
-animateValueChange("cashflow1", deal.cashflow);
-}
 
 });
 
