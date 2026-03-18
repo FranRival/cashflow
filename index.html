@@ -411,6 +411,9 @@ let marketState = "normal";
 let loans = [0,0];
 const bankInterestRate = 0.1;
 
+const bankPressureThreshold = 20000; // deuda peligrosa
+const bankMinPaymentRate = 0.05; // 5% mínimo por turno
+
 
 let assets = [
 {
@@ -539,6 +542,70 @@ let expenses=[
 {tax:200,mortgage:200,schoolLoan:100,carLoan:100,creditCard:100,retail:50,other:50,children:0},
 {tax:200,mortgage:200,schoolLoan:100,carLoan:100,creditCard:100,retail:50,other:50,children:0}
 ];
+
+
+
+function applyBankPressure(player){
+
+if(loans[player] <= 0) return;
+
+const interest = loans[player] * bankInterestRate;
+const minPayment = loans[player] * bankMinPaymentRate;
+
+// aplicar interés
+money[player] -= interest;
+
+// intentar pago mínimo
+if(money[player] >= minPayment){
+
+money[player] -= minPayment;
+loans[player] -= minPayment;
+
+}else{
+
+// no pudo pagar → penalización
+loans[player] *= 1.1;
+
+showCard(
+"⚠️ BANCO",
+`
+No pudiste pagar el mínimo.<br>
+Tu deuda crece...<br><br>
+Nueva deuda: $${Math.floor(loans[player])}
+`
+);
+
+}
+
+// zona crítica
+if(loans[player] > bankPressureThreshold){
+
+if(Math.random() < 0.3){
+
+showCard(
+"🚨 CRISIS FINANCIERA",
+`
+El banco te presiona fuertemente.<br><br>
+Debes vender activos o quebrar.
+`
+);
+
+// forzar venta automática
+if(assets[player].realEstate.length > 0){
+
+const a = assets[player].realEstate.pop();
+money[player] += a.cost;
+income[player].realEstate -= a.cashflow;
+
+}
+
+}
+
+}
+
+}
+
+
 
 
 function getCashflow(player){
@@ -1535,6 +1602,9 @@ if(step>=steps){
 
 resolveTile(positions[currentPlayer]);
 updateStockPrices();
+
+// 💣 BANCO
+applyBankPressure(currentPlayer);
 
 checkBankruptcy(currentPlayer);
 
