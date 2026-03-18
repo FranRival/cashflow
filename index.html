@@ -406,6 +406,7 @@ let fastTrack = [false,false];
 
 let money=[5000,5000];
 let marketState = "normal";
+let macroTurns = 0;
 
 //banco
 let loans = [0,0];
@@ -461,6 +462,16 @@ const marketCards = [
 
 ];
 
+const macroEvents = [
+
+{type:"inflation", name:"Inflación", duration:4},
+{type:"recession", name:"Recesión", duration:4},
+{type:"highRates", name:"Tasas Altas", duration:5},
+{type:"boom", name:"Boom Económico", duration:3},
+{type:"panic", name:"Pánico Financiero", duration:3}
+
+];
+
 const stockCards = [
 
 {name:"TechCorp", price:10, dividend:0.5},
@@ -469,6 +480,75 @@ const stockCards = [
 {name:"AutoFuture", price:8, dividend:0.3}
 
 ];
+
+function triggerMacroEvent(){
+
+const event = macroEvents[Math.floor(Math.random()*macroEvents.length)];
+
+macroState = event.type;
+macroTurns = event.duration;
+
+showCard(
+"🌎 EVENTO MACRO",
+`${event.name}<br>Duración: ${event.duration} turnos`
+);
+
+}
+
+
+function applyMacroEffects(player){
+
+if(macroState === "normal") return;
+
+// inflación → suben gastos
+if(macroState === "inflation"){
+expenses[player].other += 50;
+}
+
+// recesión → baja salario
+if(macroState === "recession"){
+income[player].salary = Math.floor(income[player].salary * 0.8);
+}
+
+// tasas altas → deuda duele más
+if(macroState === "highRates"){
+loans[player] *= 1.02;
+}
+
+// boom → suben ingresos
+if(macroState === "boom"){
+income[player].business += 100;
+}
+
+// pánico → pierde valor activos
+if(macroState === "panic"){
+money[player] -= 500;
+}
+
+}
+
+function updateMacro(){
+
+if(macroState === "normal") return;
+
+macroTurns--;
+
+if(macroTurns <= 0){
+
+macroState = "normal";
+
+showCard(
+"🌎 MACRO",
+"El mercado vuelve a la normalidad"
+);
+
+}
+
+}
+
+
+
+
 
 function checkBankruptcy(player){
 
@@ -1601,6 +1681,17 @@ if(step>=steps){
 
 
 resolveTile(positions[currentPlayer]);
+
+
+// EVENTO MACRO RANDOM
+if(Math.random() < 0.15){
+triggerMacroEvent();
+}
+
+// aplicar efectos
+applyMacroEffects(currentPlayer);
+updateMacro();
+
 updateStockPrices();
 
 // 💣 BANCO
