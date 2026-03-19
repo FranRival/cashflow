@@ -40,6 +40,7 @@ font-size:16px;
 <hr>
 
 <b>Jugador 1</b><br>
+    <div id="turnInfo">Turno: Jugador 1</div>
 
 Dinero: $<span id="money1"></span>
 Deuda banco: $<span id="loan1"></span>
@@ -406,10 +407,16 @@ let fastTrack = [false,false];
 
 let money=[5000,5000];
 let marketState = "normal";
+let macroState = "normal";
+let macroTurns = 0;
+
 
 //banco
 let loans = [0,0];
 const bankInterestRate = 0.1;
+
+const bankPressureThreshold = 20000; // deuda peligrosa
+const bankMinPaymentRate = 0.05; // 5% mínimo por turno
 
 
 let assets = [
@@ -426,26 +433,25 @@ stocks: []
 ];
 
 const smallDeals = [
-
-{title:"Casa pequeña",cost:6000,cashflow:200},
-{title:"Departamento",cost:8000,cashflow:300},
-{title:"Terreno",cost:3000,cashflow:100}
-
+{title:"Casa pequeña",cost:6000,cashflow:200, risk:0.05},
+{title:"Departamento",cost:8000,cashflow:300, risk:0.08},
+{title:"Terreno",cost:3000,cashflow:100, risk:0.02}
 ];
 
 const bigDeals = [
-
-{title:"Edificio 12 unidades",cost:40000,cashflow:2500},
-{title:"Centro comercial",cost:60000,cashflow:4000}
-
+{title:"Edificio 12 unidades",cost:40000,cashflow:2500, risk:0.15},
+{title:"Centro comercial",cost:60000,cashflow:4000, risk:0.2}
 ];
 
 const fastTrackDeals = [
 
-{title:"Hotel Resort", cost:200000, cashflow:10000},
-{title:"Cadena de restaurantes", cost:150000, cashflow:8000},
-{title:"Startup tecnológica", cost:120000, cashflow:9000},
-{title:"Centro comercial gigante", cost:500000, cashflow:20000}
+{title:"Hotel Resort", cost:200000, cashflow:10000, risk:0.1},
+
+{title:"Startup tecnológica", cost:120000, cashflow:9000, risk:0.5},
+
+{title:"Cadena restaurantes", cost:150000, cashflow:8000, risk:0.2},
+
+{title:"Mega Mall", cost:500000, cashflow:20000, risk:0.15}
 
 ];
 
@@ -459,6 +465,16 @@ const marketCards = [
 
 ];
 
+const macroEvents = [
+
+{type:"inflation", name:"Inflación", duration:4},
+{type:"recession", name:"Recesión", duration:4},
+{type:"highRates", name:"Tasas Altas", duration:5},
+{type:"boom", name:"Boom Económico", duration:3},
+{type:"panic", name:"Pánico Financiero", duration:3}
+
+];
+
 const stockCards = [
 
 {name:"TechCorp", price:10, dividend:0.5},
@@ -467,6 +483,72 @@ const stockCards = [
 {name:"AutoFuture", price:8, dividend:0.3}
 
 ];
+
+function triggerMacroEvent(){
+
+const event = macroEvents[Math.floor(Math.random()*macroEvents.length)];
+
+macroState = event.type;
+macroTurns = event.duration;
+
+showCard(
+"🌎 EVENTO MACRO",
+`${event.name}<br>Duración: ${event.duration} turnos`
+);
+
+}
+
+
+function applyMacroEffects(player){
+
+if(macroState === "normal") return;
+
+// efectos TEMPORALES
+
+if(macroState === "inflation"){
+money[player] -= 200;
+}
+
+if(macroState === "recession"){
+money[player] -= 300;
+}
+
+if(macroState === "highRates"){
+money[player] -= loans[player] * 0.02;
+}
+
+if(macroState === "boom"){
+money[player] += 300;
+}
+
+if(macroState === "panic"){
+money[player] -= 500;
+}
+
+}
+
+function updateMacro(){
+
+if(macroState === "normal") return;
+
+macroTurns--;
+
+if(macroTurns <= 0){
+
+macroState = "normal";
+
+showCard(
+"🌎 MACRO",
+"El mercado vuelve a la normalidad"
+);
+
+}
+
+}
+
+
+
+
 
 function checkBankruptcy(player){
 
@@ -540,6 +622,70 @@ let expenses=[
 {tax:200,mortgage:200,schoolLoan:100,carLoan:100,creditCard:100,retail:50,other:50,children:0},
 {tax:200,mortgage:200,schoolLoan:100,carLoan:100,creditCard:100,retail:50,other:50,children:0}
 ];
+
+
+
+function applyBankPressure(player){
+
+if(loans[player] <= 0) return;
+
+const interest = loans[player] * bankInterestRate;
+const minPayment = loans[player] * bankMinPaymentRate;
+
+// aplicar interés
+money[player] -= interest;
+
+// intentar pago mínimo
+if(money[player] >= minPayment){
+
+money[player] -= minPayment;
+loans[player] -= minPayment;
+
+}else{
+
+// no pudo pagar → penalización
+loans[player] *= 1.1;
+
+showCard(
+"⚠️ BANCO",
+`
+No pudiste pagar el mínimo.<br>
+Tu deuda crece...<br><br>
+Nueva deuda: $${Math.floor(loans[player])}
+`
+);
+
+}
+
+// zona crítica
+if(loans[player] > bankPressureThreshold){
+
+if(Math.random() < 0.3){
+
+showCard(
+"🚨 CRISIS FINANCIERA",
+`
+El banco te presiona fuertemente.<br><br>
+Debes vender activos o quebrar.
+`
+);
+
+// forzar venta automática
+if(assets[player].realEstate.length > 0){
+
+const a = assets[player].realEstate.pop();
+money[player] += a.cost;
+income[player].realEstate -= a.cashflow;
+
+}
+
+}
+
+}
+
+}
+
+
 
 
 function getCashflow(player){
@@ -857,12 +1003,19 @@ el.style.color = "white";
 
 function showCard(title,body){
 
-    waitingCard = true;
+waitingCard = true;
 
 cardTitle.innerText=title;
 cardBody.innerHTML=body;
 
 card.style.display="block";
+
+// 🤖 auto cerrar si es IA
+if(currentPlayer === 1){
+setTimeout(()=>{
+closeCard();
+},1200);
+}
 
 }
 
@@ -907,6 +1060,19 @@ waitingCard = false;
 switchTurn();
 }
 
+
+function showAIDecision(text){
+
+setTimeout(()=>{
+
+showCard("IA", text);
+
+},300);
+
+}
+
+
+
 /* EVENTO CASILLA */
 
 
@@ -932,8 +1098,8 @@ return;
 
 }
 
-const salary = income[currentPlayer].salary;
 const interestPayment = loans[currentPlayer] * bankInterestRate;
+const salary = income[currentPlayer].salary;
 
 /* ===== DIVIDENDOS (FIX) ===== */
 
@@ -953,6 +1119,7 @@ money[currentPlayer] += salary + dividendIncome;
 income[currentPlayer].dividends = dividendIncome;
 
 /* ===== INTERESES ===== */
+
 
 money[currentPlayer] -= interestPayment;
 
@@ -987,21 +1154,6 @@ return;
 }
 
 
-// DIVIDENDOS
-let dividendIncome = 0;
-
-assets[currentPlayer].stocks.forEach(s=>{
-dividendIncome += s.shares * s.price * 0.05;
-});
-
-money[currentPlayer] += dividendIncome;
-
-income[currentPlayer].dividends = dividendIncome;
-
-if(currentPlayer === 0 && dividendIncome > 0){
-animateValueChange("money1", dividendIncome);
-}
-
 
 /* SMALL DEAL */
 
@@ -1016,11 +1168,20 @@ let priceMultiplier = 1;
 if(marketState === "boom") priceMultiplier = 1.5;
 if(marketState === "crash") priceMultiplier = 0.6;
 
-deal.cost = Math.floor(deal.cost * priceMultiplier);
+const finalCost = Math.floor(deal.cost * priceMultiplier);
 
 const yesIndex = decisionActions.length;
 
 decisionActions.push(function(){
+    
+decisionActions.push(function(){
+    
+// 🤖 IA decide
+if(currentPlayer === 1){
+if(!aiDecision(currentPlayer, deal)){
+return;
+}
+}
 
 // IA decide
 if(currentPlayer === 1){
@@ -1028,6 +1189,7 @@ if(!aiShouldBuy(currentPlayer, deal)) return;
 }
 
 if(money[currentPlayer] >= deal.cost){
+
 money[currentPlayer] -= deal.cost;
 income[currentPlayer].realEstate += deal.cashflow;
 }else{
@@ -1042,6 +1204,45 @@ name: deal.title,
 cashflow: deal.cashflow,
 cost: deal.cost
 });
+
+// ✅ AQUI VA (después de comprar)
+if(currentPlayer === 1){
+showAIDecision(
+`Compró: ${deal.title}<br>
+Flujo: $${deal.cashflow}`
+);
+}
+
+if(fastTrack[currentPlayer] && deal.risk){
+
+if(Math.random() < deal.risk){
+
+income[currentPlayer].realEstate -= deal.cashflow;
+
+showCard(
+"INVERSIÓN FALLIDA",
+`${deal.title} falló 😬`
+);
+
+assets[currentPlayer].realEstate.pop();
+
+return;
+
+}
+
+}
+
+if(currentPlayer === 0){
+animateValueChange("cashflow1", deal.cashflow);
+}
+
+});
+
+}
+
+if(currentPlayer === 0){
+animateValueChange("cashflow1", deal.cashflow);
+}
 
 });
 
@@ -1064,6 +1265,13 @@ yesIndex,
 noIndex
 
 );
+
+if(currentPlayer === 1){
+showAIDecision(
+`Compró: ${deal.title}<br>
+Flujo: $${deal.cashflow}`
+);
+}
 
 }
 
@@ -1091,22 +1299,32 @@ const deal = fastTrack[currentPlayer]
 ? fastTrackDeals[Math.floor(Math.random()*fastTrackDeals.length)]
 : bigDeals[Math.floor(Math.random()*bigDeals.length)];
 
+
+
 let priceMultiplier = 1;
 
 if(marketState === "boom") priceMultiplier = 1.5;
 if(marketState === "crash") priceMultiplier = 0.6;
 
-deal.cost = Math.floor(deal.cost * priceMultiplier);
+const finalCost = Math.floor(deal.cost * priceMultiplier);
 
 const yesIndex = decisionActions.length;
 
 decisionActions.push(function(){
+    
+    if(currentPlayer === 1){
+if(!aiDecision(currentPlayer, deal)){
+switchTurn();
+return;
+}
+}
 
 if(currentPlayer === 1){
 if(!aiShouldBuy(currentPlayer, deal)) return;
 }
 
 if(money[currentPlayer] >= deal.cost){
+
 money[currentPlayer] -= deal.cost;
 }else{
 const needed = deal.cost - money[currentPlayer];
@@ -1121,6 +1339,39 @@ name: deal.title,
 cashflow: deal.cashflow,
 cost: deal.cost
 });
+
+// 🔥 SOLO SI ESTÁ EN FAST TRACK
+if(fastTrack[currentPlayer] && deal.risk){
+
+if(Math.random() < deal.risk){
+
+// pierde la inversión
+income[currentPlayer].business -= deal.cashflow;
+
+showCard(
+"INVERSIÓN FALLIDA",
+`${deal.title} fracasó 😬<br>Perdiste el activo`
+);
+
+// eliminar el activo recién agregado
+assets[currentPlayer].business.pop();
+
+return;
+
+}
+
+if(currentPlayer === 1){
+showAIDecision(
+`Invirtió en: ${deal.title}<br>
+Flujo: $${deal.cashflow}`
+);
+}
+
+}
+
+if(currentPlayer === 0){
+animateValueChange("cashflow1", deal.cashflow);
+}
 
 });
 
@@ -1296,6 +1547,8 @@ Tus gastos aumentan $150
 /* STOCK */
 
 if(type === "stock"){
+    
+    
 
 const stock =
 stockCards[Math.floor(Math.random()*stockCards.length)];
@@ -1307,6 +1560,30 @@ const totalCost = stock.price * shares;
 const yesIndex = decisionActions.length;
 
 decisionActions.push(function(){
+
+if(currentPlayer === 1){
+
+// IA compra solo si hay dinero y buen contexto
+if(money[currentPlayer] < totalCost) return;
+
+if(macroState === "panic" && Math.random() < 0.7) return;
+
+if(macroState === "boom" || Math.random() < 0.4){
+
+// compra
+
+}else{
+return;
+}
+
+if(currentPlayer === 1){
+showAIDecision(
+`Compró acciones de ${stock.name}<br>
+Costo: $${totalCost}`
+);
+}
+
+}
 
 if(money[currentPlayer] >= totalCost){
 
@@ -1376,7 +1653,48 @@ Math.max(0, expenses[currentPlayer].other - 50);
 
 }
 
+// ===============================
+// EVENTO BONUS FAST TRACK (FINAL)
+// ===============================
+
+if(fastTrack[currentPlayer] && Math.random() < 0.2){
+
+const gain = Math.floor(Math.random()*50000);
+
+money[currentPlayer] += gain;
+
+if(currentPlayer === 0){
+animateValueChange("money1", gain);
 }
+
+showCard(
+"OPORTUNIDAD GLOBAL",
+"Ganaste $" + gain
+);
+
+return;
+}
+
+}
+
+
+function aiManageDebt(player){
+
+if(player !== 1) return;
+
+if(loans[player] <= 0) return;
+
+if(money[player] > 3000){
+
+const payment = Math.min(money[player] * 0.5, loans[player]);
+
+money[player] -= payment;
+loans[player] -= payment;
+
+}
+
+}
+
 
 /* TURNOS */
 
@@ -1411,7 +1729,7 @@ Turnos restantes: ${charityTurns[currentPlayer]}
 
 if(fastTrack[currentPlayer]){
 
-result = Math.floor(Math.random()*6)+1 + 3;
+result = Math.floor(Math.random()*6)+1 + 2;
 
 }else{
 
@@ -1424,6 +1742,51 @@ result = Math.floor(Math.random()*6)+1;
 movePlayer(result);
 
 }
+
+
+
+function aiDecision(player, deal){
+
+const cashflow = getCashflow(player);
+const debt = loans[player];
+const moneyAvailable = money[player];
+
+// 🧠 prioridad 1: sobrevivir
+if(moneyAvailable < 1000 && debt > 0){
+return false;
+}
+
+// 🧠 prioridad 2: evitar sobreendeudarse
+if(debt > 20000 && Math.random() < 0.7){
+return false;
+}
+
+// 🧠 prioridad 3: evaluar rentabilidad
+const roi = deal.cashflow / deal.cost;
+
+// umbral base
+let threshold = 0.03;
+
+// 📈 si hay boom → más agresivo
+if(macroState === "boom") threshold = 0.02;
+
+// 📉 si hay recesión → más conservador
+if(macroState === "recession") threshold = 0.05;
+
+// 💣 si tiene deuda alta → más exigente
+if(debt > 15000) threshold += 0.02;
+
+// evitar préstamos absurdos
+if(deal.cost > moneyAvailable && debt > 10000){
+return false;
+}
+
+// decisión final
+return roi >= threshold;
+
+}
+
+
 
 function aiTurn(){
 
@@ -1456,9 +1819,14 @@ movePlayer(result);
 
 function switchTurn(){
 
-currentPlayer=currentPlayer===0?1:0;
+currentPlayer = currentPlayer === 0 ? 1 : 0;
 
-if(currentPlayer===1) {setTimeout(aiTurn, 1500)}
+document.getElementById("turnInfo").innerText =
+"Turno: " + (currentPlayer === 0 ? "Jugador 1" : "IA");
+
+if(currentPlayer === 1){
+setTimeout(aiTurn,1500);
+}
 
 }
 
@@ -1474,7 +1842,23 @@ if(step>=steps){
 
 
 resolveTile(positions[currentPlayer]);
+
+
+// EVENTO MACRO RANDOM
+if(macroState === "normal" && Math.random() < 0.15){
+triggerMacroEvent();
+}
+
+// aplicar efectos
+applyMacroEffects(currentPlayer);
+updateMacro();
+
 updateStockPrices();
+
+// 💣 BANCO
+applyBankPressure(currentPlayer);
+
+aiManageDebt(currentPlayer);
 
 checkBankruptcy(currentPlayer);
 
