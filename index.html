@@ -307,19 +307,28 @@ tileTypes.push(type);
 }
 
 /* ILUMINACION */
-
 function updateTileHighlights(){
 
 for(let i=0;i<tiles.length;i++){
-
 tiles[i].body.material.emissive.set(0x000000);
-
 }
 
+if(positions[0] !== undefined && tiles[positions[0]]){
 tiles[positions[0]].body.material.emissive.set(0x00ff00);
+}
+
+if(positions[1] !== undefined && tiles[positions[1]]){
 tiles[positions[1]].body.material.emissive.set(0xff0000);
+}
 
 }
+
+
+
+
+
+
+
 
 //color direrente de fast track.  
 function activateFastTrackVisual(){
@@ -499,33 +508,63 @@ showCard(
 }
 
 
+
+
+
 function applyMacroEffects(player){
 
 if(macroState === "normal") return;
 
-// efectos TEMPORALES
-
 if(macroState === "inflation"){
+
+expenses[player].other += 50;
 money[player] -= 200;
+
 }
 
 if(macroState === "recession"){
+
+income[player].salary = Math.floor(income[player].salary * 0.8);
 money[player] -= 300;
+
 }
 
 if(macroState === "highRates"){
-money[player] -= loans[player] * 0.02;
+
+const extra = loans[player] * 0.03;
+money[player] -= extra;
+
 }
 
 if(macroState === "boom"){
-money[player] += 300;
+
+money[player] += 500;
+income[player].business += 100;
+
 }
 
 if(macroState === "panic"){
-money[player] -= 500;
+
+money[player] -= 700;
+
+if(assets[player].stocks.length > 0){
+
+// venta forzada
+const asset = assets[player].stocks.pop();
+const stock = stockCards.find(s=>s.name === asset.name);
+
+money[player] += stock.price * asset.shares;
+
 }
 
 }
+
+}
+
+
+
+
+
 
 function updateMacro(){
 
@@ -548,55 +587,50 @@ showCard(
 
 
 
-
-
 function checkBankruptcy(player){
 
 if(money[player] >= 0) return;
 
-// intentar vender activos automáticamente
+let safety = 0;
 
-while(money[player] < 0){
+while(money[player] < 0 && safety < 20){
+
+safety++;
 
 let asset = null;
-let type = "";
 
-// vender primero acciones
+// 🔥 prioridad: acciones
 if(assets[player].stocks.length > 0){
 
 asset = assets[player].stocks.pop();
 const current = stockCards.find(s=>s.name === asset.name);
+
 money[player] += current.price * asset.shares;
 
 continue;
-
 }
 
-// luego bienes raíces
-if(assets[player].realEstate.length > 0){
-
-asset = assets[player].realEstate.pop();
-money[player] += asset.cost;
-
-income[player].realEstate -= asset.cashflow;
-
-continue;
-
-}
-
-// luego negocios
+// 🔥 luego negocios
 if(assets[player].business.length > 0){
 
 asset = assets[player].business.pop();
 money[player] += asset.cost;
-
 income[player].business -= asset.cashflow;
 
 continue;
-
 }
 
-// si no quedan activos → bancarrota real
+// 🔥 luego inmuebles
+if(assets[player].realEstate.length > 0){
+
+asset = assets[player].realEstate.pop();
+money[player] += asset.cost;
+income[player].realEstate -= asset.cashflow;
+
+continue;
+}
+
+// 🔥 quiebra real
 showCard(
 "BANCARROTA",
 `
@@ -612,6 +646,18 @@ return;
 }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 let income=[
 {salary:1000,realEstate:0,interest:0,dividends:0,business:0,otherAssets:0},
@@ -632,10 +678,10 @@ if(loans[player] <= 0) return;
 const interest = loans[player] * bankInterestRate;
 const minPayment = loans[player] * bankMinPaymentRate;
 
-// aplicar interés
+// 🔥 aplicar interés
 money[player] -= interest;
 
-// intentar pago mínimo
+// 🔥 pago mínimo
 if(money[player] >= minPayment){
 
 money[player] -= minPayment;
@@ -643,39 +689,42 @@ loans[player] -= minPayment;
 
 }else{
 
-// no pudo pagar → penalización
-loans[player] *= 1.1;
+// penalización controlada
+loans[player] *= 1.05;
 
 showCard(
 "⚠️ BANCO",
 `
 No pudiste pagar el mínimo.<br>
-Tu deuda crece...<br><br>
+Tu deuda aumenta.<br><br>
 Nueva deuda: $${Math.floor(loans[player])}
 `
 );
 
 }
 
-// zona crítica
+// 🔥 presión bancaria (sin romper economía)
 if(loans[player] > bankPressureThreshold){
 
-if(Math.random() < 0.3){
+if(Math.random() < 0.25){
 
 showCard(
 "🚨 CRISIS FINANCIERA",
 `
-El banco te presiona fuertemente.<br><br>
-Debes vender activos o quebrar.
+El banco te obliga a vender activos.
 `
 );
 
-// forzar venta automática
 if(assets[player].realEstate.length > 0){
 
 const a = assets[player].realEstate.pop();
+
 money[player] += a.cost;
 income[player].realEstate -= a.cashflow;
+
+if(income[player].realEstate < 0){
+income[player].realEstate = 0;
+}
 
 }
 
@@ -716,20 +765,27 @@ return incomeTotal - expenseTotal;
 }
 
 
+
+
+
 function updateStockPrices(){
 
 stockCards.forEach(stock=>{
 
-let change = (Math.random() - 0.5) * 0.2; // -10% a +10%
+let volatility = 0.2;
 
-if(marketState === "boom") change += 0.1;
-if(marketState === "crash") change -= 0.1;
+if(macroState === "boom") volatility = 0.3;
+if(macroState === "panic") volatility = 0.5;
+
+let change = (Math.random() - 0.5) * volatility;
 
 stock.price = Math.max(1, Math.floor(stock.price * (1 + change)));
 
 });
 
 }
+
+
 
 
 
@@ -748,24 +804,26 @@ inc.otherAssets
 
 }
 
+
+
+
 function getNetWorth(player){
 
 let totalAssets = 0;
 
-// bienes raíces
 assets[player].realEstate.forEach(a=>{
-totalAssets += a.cost;
+if(a && a.cost) totalAssets += a.cost;
 });
 
-// negocios
 assets[player].business.forEach(a=>{
-totalAssets += a.cost;
+if(a && a.cost) totalAssets += a.cost;
 });
 
-// acciones
 assets[player].stocks.forEach(a=>{
 const current = stockCards.find(s=>s.name === a.name);
+if(current){
 totalAssets += current.price * a.shares;
+}
 });
 
 return totalAssets + money[player] - loans[player];
@@ -820,7 +878,6 @@ Ahora juegas en modo inversión rápida.
 
 
 /* UI */
-
 function updateUI(){
 
 const inc=income[0];
@@ -844,41 +901,55 @@ exp.retail+
 exp.other+
 exp.children;
 
-money1.innerText=money[0];
+// 🔥 evitar valores NaN o negativos raros
+money1.innerText = Math.floor(money[0]);
+loan1.innerText = Math.floor(loans[0]);
 
-salary1.innerText=inc.salary;
-realestate1.innerText=inc.realEstate;
-interest1.innerText=inc.interest;
-dividends1.innerText=inc.dividends;
-business1.innerText=inc.business;
-otherassets1.innerText=inc.otherAssets;
+salary1.innerText = inc.salary;
+realestate1.innerText = inc.realEstate;
+interest1.innerText = inc.interest;
+dividends1.innerText = inc.dividends;
+business1.innerText = inc.business;
+otherassets1.innerText = inc.otherAssets;
 
-incomeTotal1.innerText=incomeTotal;
+incomeTotal1.innerText = incomeTotal;
 
-tax1.innerText=exp.tax;
-mortgage1.innerText=exp.mortgage;
-school1.innerText=exp.schoolLoan;
-car1.innerText=exp.carLoan;
-credit1.innerText=exp.creditCard;
-retail1.innerText=exp.retail;
-other1.innerText=exp.other;
-children1.innerText=exp.children;
-childcount1.innerText=childrenCount[0];
+tax1.innerText = exp.tax;
+mortgage1.innerText = exp.mortgage;
+school1.innerText = exp.schoolLoan;
+car1.innerText = exp.carLoan;
+credit1.innerText = exp.creditCard;
+retail1.innerText = exp.retail;
+other1.innerText = exp.other;
+children1.innerText = exp.children;
+childcount1.innerText = childrenCount[0];
 
-expenseTotal1.innerText=expenseTotal;
+expenseTotal1.innerText = expenseTotal;
 
-cashflow1.innerText=incomeTotal-expenseTotal;
+cashflow1.innerText = incomeTotal - expenseTotal;
 
 assets1.innerHTML = getAssetsList(0);
-loan1.innerText = loans[0];
 
 status1.innerText = fastTrack[0] ? "FAST TRACK 🚀" : "RAT RACE";
-networth1.innerText = getNetWorth(0);
+
+networth1.innerText = Math.floor(getNetWorth(0));
 
 }
 
+
+
+
+
+
+
+
+
+
+
 //pedir prestamo 
 function takeLoan(player, amount){
+
+if(amount <= 0) return;
 
 loans[player] += amount;
 money[player] += amount;
@@ -889,21 +960,29 @@ animateValueChange("money1", amount);
 
 }
 
+
+
 function getAssetsList(player){
 
 let list = "";
 
 assets[player].realEstate.forEach(a=>{
+if(a){
 list += "🏠 " + a.name + " | +" + a.cashflow + "<br>";
+}
 });
 
 assets[player].business.forEach(a=>{
+if(a){
 list += "🏢 " + a.name + " | +" + a.cashflow + "<br>";
+}
 });
 
 assets[player].stocks.forEach(a=>{
 
 const current = stockCards.find(s=>s.name === a.name);
+
+if(current){
 
 const currentValue = current.price * a.shares;
 const cost = a.buyPrice * a.shares;
@@ -911,6 +990,8 @@ const profit = currentValue - cost;
 
 list += `📈 ${a.name} | ${a.shares} acciones 
 ($${currentValue}) ${profit >= 0 ? "🟢" : "🔴"}<br>`;
+}
+
 });
 
 if(list === "") list = "Sin activos";
@@ -921,12 +1002,17 @@ return list;
 
 
 
+
 function sellAsset(player,type,index){
-    
-    if(type === "stocks"){
+
+if(type === "stocks"){
+
+if(!assets[player].stocks[index]) return;
 
 const asset = assets[player].stocks[index];
 const current = stockCards.find(s=>s.name === asset.name);
+
+if(!current) return;
 
 const value = current.price * asset.shares;
 
@@ -949,13 +1035,23 @@ Recibes $${value}`
 return;
 }
 
-const asset = assets[player][type][index];
+let key = type === "realEstate" ? "realEstate" : "business";
 
+if(!assets[player][key][index]) return;
+
+const asset = assets[player][key][index];
+
+// 🔥 asegurar consistencia
 money[player] += asset.cost;
 
-income[player][type] -= asset.cashflow;
+income[player][key] -= asset.cashflow;
 
-assets[player][type].splice(index,1);
+// 🔥 evitar negativos
+if(income[player][key] < 0){
+income[player][key] = 0;
+}
+
+assets[player][key].splice(index,1);
 
 if(player === 0){
 animateValueChange("money1", asset.cost);
@@ -975,6 +1071,10 @@ Pierdes flujo de caja de $${asset.cashflow}`
 
 
 
+
+
+
+
 function animateValueChange(elementId, change){
 
 const el = document.getElementById(elementId);
@@ -982,35 +1082,41 @@ const el = document.getElementById(elementId);
 if(!el) return;
 
 if(change > 0){
-
 el.style.color = "#00ff00";
-
 }else if(change < 0){
-
 el.style.color = "#ff4444";
-
 }
 
 setTimeout(()=>{
-
 el.style.color = "white";
-
 },1000);
 
 }
+
+
+
+
 
 /* CARTAS */
 
 function showCard(title,body){
 
+// 🔥 evita stacking de cartas
+if(waitingCard){
+return;
+}
+
 waitingCard = true;
 
-cardTitle.innerText=title;
-cardBody.innerHTML=body;
+cardTitle.innerText = title;
+cardBody.innerHTML = body;
 
-card.style.display="block";
+// 🔥 limpiar botones SIEMPRE
+cardButtons.innerHTML = "";
 
-// 🤖 auto cerrar si es IA
+card.style.display = "block";
+
+// 🔥 IA autocierra sin romper flujo
 if(currentPlayer === 1){
 setTimeout(()=>{
 closeCard();
@@ -1019,53 +1125,93 @@ closeCard();
 
 }
 
-function showDecision(title, body, yesAction, noAction){
-    
+
+
+function showDecision(title, body, yesIndex, noIndex){
+
+// 🔥 evita que se acumulen decisiones anteriores
+decisionActions = decisionActions || [];
 
 waitingCard = true;
 
 cardTitle.innerText = title;
 cardBody.innerHTML = body;
 
+// 🔥 limpiar botones antes de renderizar
+cardButtons.innerHTML = "";
+
 cardButtons.innerHTML = `
-<button onclick="executeDecision(${yesAction})">Aceptar</button>
-<button onclick="executeDecision(${noAction})">Rechazar</button>
+<button onclick="executeDecision(${yesIndex})">Aceptar</button>
+<button onclick="executeDecision(${noIndex})">Rechazar</button>
 `;
 
 card.style.display = "block";
 
 }
 
+
+
+
 let decisionActions = [];
 
 function executeDecision(index){
 
+// 🔥 prevenir doble ejecución
+if(waitingCard === false) return;
+
+waitingCard = false;
+
+// 🔥 ejecutar acción segura
 if(decisionActions[index]){
 decisionActions[index]();
 }
 
-decisionActions = []; //reset
-card.style.display="none";
-waitingCard=false;
+// 🔥 limpiar completamente estado
+decisionActions = [];
 
+// 🔥 limpiar UI
+cardButtons.innerHTML = "";
+card.style.display = "none";
+
+// 🔥 asegurar actualización visual
+updateUI();
+
+// 🔥 cambiar turno correctamente
 switchTurn();
 
 }
+
 
 function closeCard(){
 
-card.style.display="none";
+// 🔥 evitar doble cierre
+if(!waitingCard) return;
 
+// 🔥 cerrar UI primero
+card.style.display = "none";
+cardButtons.innerHTML = "";
+
+// 🔥 liberar estado
 waitingCard = false;
+
+// 🔥 asegurar actualización
+updateUI();
+
+// 🔥 pasar turno
 switchTurn();
+
 }
+
+
 
 
 function showAIDecision(text){
 
 setTimeout(()=>{
 
+if(!waitingCard){
 showCard("IA", text);
+}
 
 },300);
 
@@ -1081,7 +1227,6 @@ function resolveTile(index){
 const type = tileTypes[index];
 
 /* PAYDAY */
-
 if(type === "payday"){
 
 if(downsizedTurns[currentPlayer] > 0){
@@ -1095,13 +1240,10 @@ Turnos restantes: ${downsizedTurns[currentPlayer]}`
 );
 
 return;
-
 }
 
 const interestPayment = loans[currentPlayer] * bankInterestRate;
 const salary = income[currentPlayer].salary;
-
-/* ===== DIVIDENDOS (FIX) ===== */
 
 let dividendIncome = 0;
 
@@ -1112,36 +1254,12 @@ dividendIncome += s.shares * stock.dividend;
 }
 });
 
-/* ===== APLICAR DINERO ===== */
-
 money[currentPlayer] += salary + dividendIncome;
-
 income[currentPlayer].dividends = dividendIncome;
-
-/* ===== INTERESES ===== */
-
 
 money[currentPlayer] -= interestPayment;
 
 checkRatRaceExit(currentPlayer);
-
-/* ===== UI ===== */
-
-if(currentPlayer === 0){
-
-animateValueChange("money1", salary);
-
-if(dividendIncome > 0){
-setTimeout(()=>{
-animateValueChange("money1", dividendIncome);
-},300);
-}
-
-setTimeout(()=>{
-animateValueChange("money1", -interestPayment);
-},600);
-
-}
 
 showCard(
 "PAYDAY",
@@ -1153,10 +1271,7 @@ Intereses banco: $${interestPayment}`
 return;
 }
 
-
-
 /* SMALL DEAL */
-
 if(type === "smallDeal"){
 
 const deal = fastTrack[currentPlayer]
@@ -1164,7 +1279,6 @@ const deal = fastTrack[currentPlayer]
 : smallDeals[Math.floor(Math.random()*smallDeals.length)];
 
 let priceMultiplier = 1;
-
 if(marketState === "boom") priceMultiplier = 1.5;
 if(marketState === "crash") priceMultiplier = 0.6;
 
@@ -1173,136 +1287,70 @@ const finalCost = Math.floor(deal.cost * priceMultiplier);
 const yesIndex = decisionActions.length;
 
 decisionActions.push(function(){
-    
-decisionActions.push(function(){
-    
-// 🤖 IA decide
+
 if(currentPlayer === 1){
 if(!aiDecision(currentPlayer, deal)){
 return;
 }
 }
 
-// IA decide
-if(currentPlayer === 1){
-if(!aiShouldBuy(currentPlayer, deal)) return;
-}
-
-if(money[currentPlayer] >= deal.cost){
-
-money[currentPlayer] -= deal.cost;
-income[currentPlayer].realEstate += deal.cashflow;
+if(money[currentPlayer] >= finalCost){
+money[currentPlayer] -= finalCost;
 }else{
-const needed = deal.cost - money[currentPlayer];
-takeLoan(currentPlayer, needed);
-money[currentPlayer] -= deal.cost;
-income[currentPlayer].realEstate += deal.cashflow;
+takeLoan(currentPlayer, finalCost - money[currentPlayer]);
+money[currentPlayer] -= finalCost;
 }
+
+income[currentPlayer].realEstate += deal.cashflow;
 
 assets[currentPlayer].realEstate.push({
 name: deal.title,
 cashflow: deal.cashflow,
-cost: deal.cost
+cost: finalCost
 });
 
-// ✅ AQUI VA (después de comprar)
-if(currentPlayer === 1){
-showAIDecision(
-`Compró: ${deal.title}<br>
-Flujo: $${deal.cashflow}`
-);
-}
-
-if(fastTrack[currentPlayer] && deal.risk){
-
-if(Math.random() < deal.risk){
-
-income[currentPlayer].realEstate -= deal.cashflow;
-
-showCard(
-"INVERSIÓN FALLIDA",
-`${deal.title} falló 😬`
-);
-
-assets[currentPlayer].realEstate.pop();
-
-return;
-
-}
-
-}
-
-if(currentPlayer === 0){
-animateValueChange("cashflow1", deal.cashflow);
-}
-
-});
-
-}
-
-if(currentPlayer === 0){
-animateValueChange("cashflow1", deal.cashflow);
-}
+updateUI();
 
 });
 
 const noIndex = decisionActions.length;
-
 decisionActions.push(function(){});
 
 showDecision(
-
 "SMALL DEAL",
-
 `
 Activo: ${deal.title}<br>
-Costo: $${deal.cost}<br>
-Flujo de caja: $${deal.cashflow}<br><br>
-¿Comprar inversión?
+Costo: $${finalCost}<br>
+Flujo: $${deal.cashflow}<br><br>
+¿Comprar?
 `,
-
 yesIndex,
 noIndex
-
 );
 
-if(currentPlayer === 1){
-showAIDecision(
-`Compró: ${deal.title}<br>
-Flujo: $${deal.cashflow}`
-);
-}
-
+return;
 }
 
 /* DOWNSIZED */
-
 if(type === "downsized"){
 
 downsizedTurns[currentPlayer] = 2;
 
-showCard(
-"DOWNSIZED",
-`
-¡Has perdido tu trabajo!<br><br>
-Durante 2 turnos no recibirás salario.
-`
-);
+showCard("DOWNSIZED","Pierdes empleo");
 
+updateUI();
+
+return;
 }
 
 /* BIG DEAL */
-
 if(type === "bigDeal"){
 
 const deal = fastTrack[currentPlayer]
 ? fastTrackDeals[Math.floor(Math.random()*fastTrackDeals.length)]
 : bigDeals[Math.floor(Math.random()*bigDeals.length)];
 
-
-
 let priceMultiplier = 1;
-
 if(marketState === "boom") priceMultiplier = 1.5;
 if(marketState === "crash") priceMultiplier = 0.6;
 
@@ -1311,25 +1359,18 @@ const finalCost = Math.floor(deal.cost * priceMultiplier);
 const yesIndex = decisionActions.length;
 
 decisionActions.push(function(){
-    
-    if(currentPlayer === 1){
+
+if(currentPlayer === 1){
 if(!aiDecision(currentPlayer, deal)){
-switchTurn();
 return;
 }
 }
 
-if(currentPlayer === 1){
-if(!aiShouldBuy(currentPlayer, deal)) return;
-}
-
-if(money[currentPlayer] >= deal.cost){
-
-money[currentPlayer] -= deal.cost;
+if(money[currentPlayer] >= finalCost){
+money[currentPlayer] -= finalCost;
 }else{
-const needed = deal.cost - money[currentPlayer];
-takeLoan(currentPlayer, needed);
-money[currentPlayer] -= deal.cost;
+takeLoan(currentPlayer, finalCost - money[currentPlayer]);
+money[currentPlayer] -= finalCost;
 }
 
 income[currentPlayer].business += deal.cashflow;
@@ -1337,96 +1378,33 @@ income[currentPlayer].business += deal.cashflow;
 assets[currentPlayer].business.push({
 name: deal.title,
 cashflow: deal.cashflow,
-cost: deal.cost
+cost: finalCost
 });
 
-// 🔥 SOLO SI ESTÁ EN FAST TRACK
-if(fastTrack[currentPlayer] && deal.risk){
-
-if(Math.random() < deal.risk){
-
-// pierde la inversión
-income[currentPlayer].business -= deal.cashflow;
-
-showCard(
-"INVERSIÓN FALLIDA",
-`${deal.title} fracasó 😬<br>Perdiste el activo`
-);
-
-// eliminar el activo recién agregado
-assets[currentPlayer].business.pop();
-
-return;
-
-}
-
-if(currentPlayer === 1){
-showAIDecision(
-`Invirtió en: ${deal.title}<br>
-Flujo: $${deal.cashflow}`
-);
-}
-
-}
-
-if(currentPlayer === 0){
-animateValueChange("cashflow1", deal.cashflow);
-}
+updateUI();
 
 });
-
-
 
 const noIndex = decisionActions.length;
-
 decisionActions.push(function(){});
 
 showDecision(
-
-fastTrack[currentPlayer] ? "FAST TRACK INVESTMENT" : "BIG DEAL",
-
+"BIG DEAL",
 `
 Activo: ${deal.title}<br>
-Costo: $${deal.cost}<br>
-Flujo de caja: $${deal.cashflow}<br><br>
+Costo: $${finalCost}<br>
+Flujo: $${deal.cashflow}<br><br>
 ¿Invertir?
 `,
-
 yesIndex,
 noIndex
-
 );
 
+return;
 }
 
 /* MARKET */
-
 if(type === "market"){
-
-const event =
-marketCards[Math.floor(Math.random()*marketCards.length)];
-
-// cambiar estado del mercado
-if(event.effect === "boom") marketState = "boom";
-if(event.effect === "crash") marketState = "crash";
-if(event.effect === "normal") marketState = "normal";
-
-
-// ===== EFECTOS =====
-
-if(event.effect === "realEstateDouble"){
-income[currentPlayer].realEstate += 250;
-}
-
-if(event.effect === "realEstateHalf"){
-income[currentPlayer].realEstate =
-Math.floor(income[currentPlayer].realEstate * 0.7);
-}
-
-
-// ===== OFERTA DE VENTA =====
-
-if(event.effect === "sellAssetOffer"){
 
 const playerAssets = [
 ...assets[currentPlayer].realEstate,
@@ -1434,8 +1412,7 @@ const playerAssets = [
 ];
 
 if(playerAssets.length === 0){
-
-showCard("MERCADO","No tienes activos para vender.");
+showCard("MERCADO","No tienes activos");
 return;
 }
 
@@ -1449,10 +1426,6 @@ const yesIndex = decisionActions.length;
 decisionActions.push(function(){
 
 money[currentPlayer] += offerPrice;
-
-if(currentPlayer === 0){
-animateValueChange("money1", offerPrice);
-}
 
 let list = assets[currentPlayer].realEstate;
 let index = list.findIndex(a=>a.name===asset.name);
@@ -1470,19 +1443,20 @@ list.splice(index,1);
 }
 }
 
+updateUI();
+
 });
 
 const noIndex = decisionActions.length;
 decisionActions.push(function(){});
 
 showDecision(
-"OFERTA DE MERCADO",
+"MERCADO",
 `
-Quieren comprar tu activo:<br><br>
+Oferta por:<br>
 ${asset.name}<br>
-Costo original: $${asset.cost}<br>
-Oferta: $${offerPrice}<br><br>
-¿Aceptar venta?
+$${offerPrice}<br><br>
+¿Vender?
 `,
 yesIndex,
 noIndex
@@ -1491,64 +1465,35 @@ noIndex
 return;
 }
 
-
-// ===== EVENTO NORMAL =====
-
-showCard(
-"MARKET",
-`${event.title}`
-);
-
-return;
-}
-
 /* DOODAD */
-
 if(type === "doodad"){
 
 const cost = 700;
 
-
 money[currentPlayer] -= cost;
 
-if(currentPlayer === 0){
-animateValueChange("money1", -cost);
-}
+showCard("DOODAD",`Gasto $${cost}`);
 
-showCard(
-"DOODAD",
-`Gasto inesperado de $${cost}`
-);
+updateUI();
 
+return;
 }
 
 /* CHILD */
-
 if(type === "child"){
 
 childrenCount[currentPlayer]++;
-
 expenses[currentPlayer].children += 150;
 
-showCard(
-"HIJO",
-`
-¡Has tenido un hijo! 👶<br><br>
-Hijos totales: ${childrenCount[currentPlayer]}<br>
-Tus gastos aumentan $150
-`
-);
+showCard("HIJO","Nuevo hijo");
 
+updateUI();
+
+return;
 }
 
-
-//stocks
-
 /* STOCK */
-
 if(type === "stock"){
-    
-    
 
 const stock =
 stockCards[Math.floor(Math.random()*stockCards.length)];
@@ -1563,26 +1508,11 @@ decisionActions.push(function(){
 
 if(currentPlayer === 1){
 
-// IA compra solo si hay dinero y buen contexto
 if(money[currentPlayer] < totalCost) return;
-
 if(macroState === "panic" && Math.random() < 0.7) return;
+if(!(macroState === "boom" || Math.random() < 0.4)) return;
 
-if(macroState === "boom" || Math.random() < 0.4){
-
-// compra
-
-}else{
-return;
-}
-
-if(currentPlayer === 1){
-showAIDecision(
-`Compró acciones de ${stock.name}<br>
-Costo: $${totalCost}`
-);
-}
-
+showAIDecision(`Compró ${stock.name}`);
 }
 
 if(money[currentPlayer] >= totalCost){
@@ -1595,87 +1525,63 @@ shares: shares,
 buyPrice: stock.price
 });
 
-if(currentPlayer === 0){
-animateValueChange("money1",-totalCost);
-}
+updateUI();
 
 }
 
 });
 
 const noIndex = decisionActions.length;
-
 decisionActions.push(function(){});
 
-showDecision(
+showDecision("STOCK","¿Comprar acciones?",yesIndex,noIndex);
 
-"STOCK OPPORTUNITY",
-
-`
-Empresa: ${stock.name}<br>
-Precio: $${stock.price}<br>
-Acciones: ${shares}<br>
-Costo total: $${totalCost}<br><br>
-¿Comprar acciones?
-`,
-
-yesIndex,
-noIndex
-
-);
-
+return;
 }
 
 /* CHARITY */
-
 if(type === "charity"){
 
-const cost = 300;
-
-money[currentPlayer] -= cost;
-
-if(currentPlayer === 0){
-animateValueChange("money1",-cost);
-}
-
+money[currentPlayer] -= 300;
 charityTurns[currentPlayer] = 3;
 
-showCard(
-"CHARITY",
-`
-Donas $${cost}<br><br>
-Durante 3 turnos podrás lanzar 2 dados
-`
-);
+showCard("CHARITY","Donación");
 
-expenses[currentPlayer].other =
-Math.max(0, expenses[currentPlayer].other - 50);
+updateUI();
 
+return;
 }
 
-// ===============================
-// EVENTO BONUS FAST TRACK (FINAL)
-// ===============================
-
+/* BONUS */
 if(fastTrack[currentPlayer] && Math.random() < 0.2){
 
 const gain = Math.floor(Math.random()*50000);
-
 money[currentPlayer] += gain;
 
-if(currentPlayer === 0){
-animateValueChange("money1", gain);
-}
+showCard("BONUS","Ganaste $" + gain);
 
-showCard(
-"OPORTUNIDAD GLOBAL",
-"Ganaste $" + gain
-);
+updateUI();
 
 return;
 }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 function aiManageDebt(player){
@@ -1745,46 +1651,55 @@ movePlayer(result);
 
 
 
+
+
 function aiDecision(player, deal){
 
-const cashflow = getCashflow(player);
 const debt = loans[player];
 const moneyAvailable = money[player];
+const cashflow = getCashflow(player);
 
-// 🧠 prioridad 1: sobrevivir
-if(moneyAvailable < 1000 && debt > 0){
+// 🔥 supervivencia
+if(moneyAvailable < 500 && debt > 0){
 return false;
 }
 
-// 🧠 prioridad 2: evitar sobreendeudarse
-if(debt > 20000 && Math.random() < 0.7){
+// 🔥 evitar sobreendeudamiento
+if(debt > 20000 && Math.random() < 0.8){
 return false;
 }
 
-// 🧠 prioridad 3: evaluar rentabilidad
+// 🔥 ROI
 const roi = deal.cashflow / deal.cost;
 
-// umbral base
-let threshold = 0.03;
+// 🔥 umbral dinámico
+let threshold = 0.04;
 
-// 📈 si hay boom → más agresivo
-if(macroState === "boom") threshold = 0.02;
+// contexto económico
+if(macroState === "boom") threshold = 0.025;
+if(macroState === "recession") threshold = 0.06;
+if(macroState === "panic") threshold = 0.08;
 
-// 📉 si hay recesión → más conservador
-if(macroState === "recession") threshold = 0.05;
-
-// 💣 si tiene deuda alta → más exigente
+// deuda alta = más exigente
 if(debt > 15000) threshold += 0.02;
 
-// evitar préstamos absurdos
+// 🔥 agresividad si va bien
+if(cashflow > 1000){
+threshold -= 0.01;
+}
+
+// 🔥 evitar compras absurdas
 if(deal.cost > moneyAvailable && debt > 10000){
 return false;
 }
 
-// decisión final
+// 🔥 decisión final
 return roi >= threshold;
 
 }
+
+
+
 
 
 
@@ -1793,6 +1708,8 @@ function aiTurn(){
 if(waitingCard) return;
 
 setTimeout(()=>{
+
+if(waitingCard) return;
 
 let result;
 
@@ -1807,17 +1724,32 @@ charityTurns[currentPlayer]--;
 
 }else{
 
+if(fastTrack[currentPlayer]){
+result = Math.floor(Math.random()*6)+1 + 2;
+}else{
 result = Math.floor(Math.random()*6)+1;
+}
 
 }
 
+if(currentPlayer === 1){
 movePlayer(result);
+}
 
 },800);
 
 }
 
+
+
+
+
+
+
+
 function switchTurn(){
+
+if(waitingCard) return;
 
 currentPlayer = currentPlayer === 0 ? 1 : 0;
 
@@ -1825,10 +1757,20 @@ document.getElementById("turnInfo").innerText =
 "Turno: " + (currentPlayer === 0 ? "Jugador 1" : "IA");
 
 if(currentPlayer === 1){
-setTimeout(aiTurn,1500);
+
+setTimeout(()=>{
+
+if(!waitingCard && currentPlayer === 1){
+aiTurn();
+}
+
+},500);
+
 }
 
 }
+
+
 
 /* MOVIMIENTO */
 
@@ -1840,34 +1782,23 @@ function stepMove(){
 
 if(step>=steps){
 
-
 resolveTile(positions[currentPlayer]);
 
-
-// EVENTO MACRO RANDOM
 if(macroState === "normal" && Math.random() < 0.15){
 triggerMacroEvent();
 }
 
-// aplicar efectos
 applyMacroEffects(currentPlayer);
 updateMacro();
-
 updateStockPrices();
-
-// 💣 BANCO
 applyBankPressure(currentPlayer);
-
 aiManageDebt(currentPlayer);
-
 checkBankruptcy(currentPlayer);
 
 updateUI();
-
 checkVictory(currentPlayer);
 
-return
-
+return; // 🔥 FIX CRÍTICO
 
 }
 
@@ -1876,7 +1807,6 @@ step++;
 positions[currentPlayer]=(positions[currentPlayer]+1)%tiles.length;
 
 const player=currentPlayer===0?player1:player2;
-
 const tile=tiles[positions[currentPlayer]];
 
 const startX=player.position.x;
@@ -1895,14 +1825,10 @@ player.position.x=startX+(endX-startX)*progress;
 player.position.z=startZ+(endZ-startZ)*progress;
 
 if(progress<1){
-
 requestAnimationFrame(animateMove);
-
 }else{
-
 updateTileHighlights();
 setTimeout(stepMove,120);
-
 }
 
 }
@@ -1914,6 +1840,14 @@ animateMove();
 stepMove();
 
 }
+
+
+
+
+
+
+
+
 
 /* POSICION INICIAL */
 
@@ -1948,7 +1882,3 @@ renderer.render(scene,camera);
 
 animate();
 
-</script>
-
-</body>
-</html>
