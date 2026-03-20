@@ -21,7 +21,6 @@ background:rgba(0,0,0,0.6);
 padding:12px;
 border-radius:8px;
 color:white;
-z-index:10; /* 🔥 CLAVE */
 }
 
 button{
@@ -117,9 +116,41 @@ box-shadow:0 0 20px rgba(0,0,0,0.5);
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-<script>
-    console.log("SCRIPT INICIADO");
 
+<script>
+    console.log("script start");
+
+const card = document.getElementById("card");
+const cardTitle = document.getElementById("cardTitle");
+const cardBody = document.getElementById("cardBody");
+const cardButtons = document.getElementById("cardButtons");
+
+const money1 = document.getElementById("money1");
+const loan1 = document.getElementById("loan1");
+const salary1 = document.getElementById("salary1");
+const realestate1 = document.getElementById("realestate1");
+const interest1 = document.getElementById("interest1");
+const dividends1 = document.getElementById("dividends1");
+const business1 = document.getElementById("business1");
+const otherassets1 = document.getElementById("otherassets1");
+
+const incomeTotal1 = document.getElementById("incomeTotal1");
+
+const tax1 = document.getElementById("tax1");
+const mortgage1 = document.getElementById("mortgage1");
+const school1 = document.getElementById("school1");
+const car1 = document.getElementById("car1");
+const credit1 = document.getElementById("credit1");
+const retail1 = document.getElementById("retail1");
+const other1 = document.getElementById("other1");
+const children1 = document.getElementById("children1");
+const childcount1 = document.getElementById("childcount1");
+
+const expenseTotal1 = document.getElementById("expenseTotal1");
+const cashflow1 = document.getElementById("cashflow1");
+const status1 = document.getElementById("status1");
+const networth1 = document.getElementById("networth1");
+const assets1 = document.getElementById("assets1");
 
 //turno de quien es. trajeta en la esquina superior izqueirda
 //tarjetas, aceptar trato o declinar (compra de activos)
@@ -130,6 +161,7 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 
 /* CAMARA */
+
 const camera = new THREE.PerspectiveCamera(
 60,
 window.innerWidth/window.innerHeight,
@@ -137,55 +169,39 @@ window.innerWidth/window.innerHeight,
 1000
 );
 
-// 🔥 POSICIÓN FIJA (NO dinámica)
-camera.position.set(0, 12, 18);
-camera.lookAt(0, 0, 0);
+let cameraAngle = 0;
+let cameraRadius = 15;
+let cameraHeight = 8;
+let childrenCount = [0,0];
 
-// 🔥 control con mouse más estable
-const testCube = new THREE.Mesh(
-    new THREE.BoxGeometry(2,2,2),
-    new THREE.MeshBasicMaterial({color:0xff0000})
-);
+camera.position.set(0,cameraHeight,cameraRadius);
+camera.lookAt(0,0,0);
 
-testCube.position.set(0,1,0);
-scene.add(testCube);
+window.addEventListener("mousemove",(e)=>{
 
+cameraAngle = (e.clientX / window.innerWidth) * Math.PI * 2;
 
+camera.position.x = Math.cos(cameraAngle) * cameraRadius;
+camera.position.z = Math.sin(cameraAngle) * cameraRadius;
+camera.position.y = cameraHeight;
 
+camera.lookAt(0,0,0);
 
-
-
-
+});
 
 /* RENDER */
 
-/* RENDER CORREGIDO */
-/* RENDERIZADO ROBUSTO */
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0xff0000, 1); // 🔥 rojo brutal para debug
-
-// 🔥 FORZAR QUE EL CANVAS ESTÉ ARRIBA
-renderer.domElement.style.position = "fixed";
-renderer.domElement.style.top = "0";
-renderer.domElement.style.left = "0";
-renderer.domElement.style.zIndex = "0";
-
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth,window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-/* ILUMINACIÓN TOTAL */
-// Luz ambiental fuerte para que NADA se vea negro
-const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
-scene.add(ambientLight);
+/* LUCES */
 
-const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
-scene.add(hemisphereLight);
+scene.add(new THREE.AmbientLight(0xffffff,0.9));
 
-/* CÁMARA INICIAL */
-camera.position.set(0, 15, 15);
-camera.lookAt(0, 0, 0);
+const light = new THREE.DirectionalLight(0xffffff,0.6);
+light.position.set(10,20,10);
+scene.add(light);
 
 /* COLORES */
 
@@ -229,62 +245,76 @@ return "downsized";
 }
 
 /* TRAPECIO */
-function createTrapezoid(type) {
 
-    const group = new THREE.Group();
+function createTrapezoid(type){
 
-    const widthFront = 2;
-    const widthBack = 1.2;
-    const length = 3;
-    const height = 0.5;
+const group = new THREE.Group();
 
-    const shape = new THREE.Shape();
-    shape.moveTo(-widthFront / 2, -length / 2);
-    shape.lineTo(widthFront / 2, -length / 2);
-    shape.lineTo(widthBack / 2, length / 2);
-    shape.lineTo(-widthBack / 2, length / 2);
+const widthFront = 2;
+const widthBack = 1.2;
+const length = 3;
+const height = 0.5;
 
-    const geometry = new THREE.ExtrudeGeometry(shape, {
-        depth: height,
-        bevelEnabled: false
-    });
+const shape = new THREE.Shape();
 
-    geometry.rotateX(-Math.PI / 2);
+shape.moveTo(-widthFront/2,-length/2);
+shape.lineTo(widthFront/2,-length/2);
+shape.lineTo(widthBack/2,length/2);
+shape.lineTo(-widthBack/2,length/2);
 
-    const material = new THREE.MeshBasicMaterial({
-        color: tileColor(type),
-        side: THREE.DoubleSide
-    });
+const geometry = new THREE.ExtrudeGeometry(shape,{
+depth:height,
+bevelEnabled:false
+});
 
-    const body = new THREE.Mesh(geometry, material);
-    body.position.y = 1;
+geometry.rotateX(-Math.PI/2);
 
-    group.add(body);
-    group.body = body;
+const material = new THREE.MeshLambertMaterial({
+color:tileColor(type)
+});
 
-    return group;
+const body = new THREE.Mesh(geometry,material);
+
+group.add(body);
+group.body = body;
+
+/* TEXTO */
+
+const canvas = document.createElement("canvas");
+canvas.width = 256;
+canvas.height = 128;
+
+const ctx = canvas.getContext("2d");
+
+ctx.fillStyle = "#" + tileColor(type).toString(16).padStart(6,"0");
+ctx.fillRect(0,0,256,128);
+
+ctx.fillStyle="black";
+ctx.font="bold 36px Arial";
+ctx.textAlign="center";
+ctx.textBaseline="middle";
+
+ctx.fillText(type.toUpperCase(),128,64);
+
+const texture = new THREE.CanvasTexture(canvas);
+
+const labelMaterial = new THREE.MeshBasicMaterial({map:texture});
+const labelGeometry = new THREE.PlaneGeometry(2,1);
+
+const label = new THREE.Mesh(labelGeometry,labelMaterial);
+
+label.position.set(0,0.6,length/2 + 0.02);
+
+group.add(label);
+
+return group;
+
 }
-
-
-
-
-
-
-
-// 🔥 DEBUG VISUAL (NO LO QUITES)
-const axesHelper = new THREE.AxesHelper(5);
-scene.add(axesHelper);
-
-const gridHelper = new THREE.GridHelper(20, 20);
-scene.add(gridHelper);
-
-
-
 
 /* TABLERO */
 
 const tileCount = 24;
-const radius = 10;
+const radius = 6.2;
 
 const tiles=[];
 const tileTypes=[];
@@ -309,39 +339,22 @@ tileTypes.push(type);
 
 }
 
-// 🔥 DEBUG
-console.log("Tiles creados:", tiles.length);
-
 /* ILUMINACION */
 function updateTileHighlights(){
 
 for(let i=0;i<tiles.length;i++){
-
-if(tiles[i].body && tiles[i].body.material){
-
-// 🔥 en lugar de emissive, usamos color directo
 tiles[i].body.material.color.set(tileColor(tileTypes[i]));
-
 }
 
-}
-
-// jugador 1 (verde)
-if(positions[0] !== undefined && tiles[positions[0]]){
-
+if(tiles[positions[0]]){
 tiles[positions[0]].body.material.color.set(0x00ff00);
-
 }
 
-// jugador 2 (rojo)
-if(positions[1] !== undefined && tiles[positions[1]]){
-
+if(tiles[positions[1]]){
 tiles[positions[1]].body.material.color.set(0xff0000);
-
 }
 
 }
-
 
 
 
@@ -371,7 +384,11 @@ const canvas=document.createElement("canvas");
 canvas.width=256;
 canvas.height=256;
 
-const ctx=canvas.getContext("2d");
+const ctx = canvas.getContext("2d");
+if(!ctx){
+    console.error("Canvas dice failed");
+    return new THREE.MeshStandardMaterial({color:0xffffff});
+}
 
 ctx.fillStyle="white";
 ctx.fillRect(0,0,256,256);
@@ -1793,53 +1810,71 @@ aiTurn();
 
 /* MOVIMIENTO */
 
-function movePlayer(steps) {
-    let step = 0;
-    const player = currentPlayer === 0 ? player1 : player2;
+function movePlayer(steps){
 
-    function stepMove() {
-        if (step >= steps) {
-            resolveTile(positions[currentPlayer]);
-            
-            if (macroState === "normal" && Math.random() < 0.15) triggerMacroEvent();
-            
-            applyMacroEffects(currentPlayer);
-            updateMacro();
-            updateStockPrices();
-            applyBankPressure(currentPlayer);
-            aiManageDebt(currentPlayer);
-            checkBankruptcy(currentPlayer);
-            updateUI();
-            checkVictory(currentPlayer);
-            return; 
-        }
+let step=0;
 
-        step++;
-        positions[currentPlayer] = (positions[currentPlayer] + 1) % tiles.length;
-        const tile = tiles[positions[currentPlayer]];
+function stepMove(){
 
-        const startX = player.position.x;
-        const startZ = player.position.z;
-        const endX = tile.position.x;
-        const endZ = tile.position.z;
+if(step>=steps){
 
-        let progress = 0;
-        function animateStep() {
-            progress += 0.08; // Más rápido para fluidez
-            player.position.x = startX + (endX - startX) * progress;
-            player.position.z = startZ + (endZ - startZ) * progress;
+resolveTile(positions[currentPlayer]);
 
-            if (progress < 1) {
-                requestAnimationFrame(animateStep);
-            } else {
-                player.position.set(endX, player.position.y, endZ); // Asegura posición final
-                updateTileHighlights();
-                setTimeout(stepMove, 100);
-            }
-        }
-        animateStep();
-    }
-    stepMove();
+if(macroState === "normal" && Math.random() < 0.15){
+triggerMacroEvent();
+}
+
+applyMacroEffects(currentPlayer);
+updateMacro();
+updateStockPrices();
+applyBankPressure(currentPlayer);
+aiManageDebt(currentPlayer);
+checkBankruptcy(currentPlayer);
+
+updateUI();
+checkVictory(currentPlayer);
+
+return; // 🔥 FIX CRÍTICO
+
+}
+
+step++;
+
+positions[currentPlayer]=(positions[currentPlayer]+1)%tiles.length;
+
+const player=currentPlayer===0?player1:player2;
+const tile=tiles[positions[currentPlayer]];
+
+const startX=player.position.x;
+const startZ=player.position.z;
+
+const endX=tile.position.x;
+const endZ=tile.position.z;
+
+let progress=0;
+
+function animateMove(){
+
+progress+=0.05;
+
+player.position.x=startX+(endX-startX)*progress;
+player.position.z=startZ+(endZ-startZ)*progress;
+
+if(progress<1){
+requestAnimationFrame(animateMove);
+}else{
+updateTileHighlights();
+setTimeout(stepMove,120);
+}
+
+}
+
+animateMove();
+
+}
+
+stepMove();
+
 }
 
 
@@ -1854,16 +1889,15 @@ function movePlayer(steps) {
 
 function placePlayers(){
 
-if(!tiles[0]) return;
+const tile=tiles[0];
 
-const tile = tiles[0];
+player1.position.x=tile.position.x;
+player1.position.z=tile.position.z;
 
-player1.position.set(tile.position.x, 1, tile.position.z);
-player2.position.set(tile.position.x + 0.8, 1, tile.position.z);
+player2.position.x=tile.position.x+0.6;
+player2.position.z=tile.position.z;
 
 }
-
-
 
 placePlayers();
 updateTileHighlights();
@@ -1871,49 +1905,22 @@ updateUI();
 
 /* LOOP */
 
-/* LOOP DE RENDERIZADO CORREGIDO */
-/* LOOP DE RENDERIZADO */
-function animate() {
-    requestAnimationFrame(animate);
+function animate(){
 
-    if (dice) {
-        dice.rotation.x += 0.01;
-        dice.rotation.y += 0.01;
-    }
+requestAnimationFrame(animate);
 
-    renderer.render(scene, camera);
+dice.rotation.x+=0.01;
+dice.rotation.y+=0.01;
+
+renderer.render(scene,camera);
+
 }
 
-function initGame() {
+animate();
 
-    if (!renderer || !scene || !camera) {
-        console.error("ERROR: Renderer, escena o cámara no definidos");
-        return;
-    }
 
-    if (!tiles || tiles.length === 0) {
-        console.error("ERROR: El tablero no se generó");
-        return;
-    }
+</script>
 
-    placePlayers();
-    updateUI();
+</body>
 
-    renderer.render(scene, camera);
-
-    animate();
-
-    console.log("✅ Juego inicializado correctamente");
-}
-
-/* INICIO */
-window.addEventListener("load", () => {
-    initGame();
-});
-
-/* RESIZE */
-window.addEventListener("resize", () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
+</html>
