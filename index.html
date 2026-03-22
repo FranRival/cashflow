@@ -226,21 +226,61 @@ default: return 0x888888;
 }
 
 /* CASILLA RANDOM */
+/* =========================
+   SISTEMA DE DISTRIBUCIÓN REAL
+========================= */
 
-function randomTileType(){
+// 🔹 pool balanceado
+function createTilePool(){
 
-const r=Math.random();
+return [
+...Array(4).fill("payday"),
+...Array(8).fill("smallDeal"),
+...Array(3).fill("bigDeal"),
+...Array(3).fill("market"),
+...Array(3).fill("stock"),
+...Array(2).fill("doodad"),
+...Array(1).fill("charity"),
+...Array(2).fill("child"),
+...Array(1).fill("downsized")
+];
 
-if(r<0.2) return "payday";
-if(r<0.5) return "smallDeal";
-if(r<0.6) return "bigDeal";
-if(r<0.7) return "market";
-if(r<0.8) return "stock";
-if(r<0.9) return "doodad";
-if(r<0.93) return "charity";
-if(r<0.96) return "child";
+}
 
-return "downsized";
+// 🔹 shuffle real (Fisher-Yates)
+function shuffle(array){
+
+for(let i = array.length - 1; i > 0; i--){
+
+const j = Math.floor(Math.random() * (i + 1));
+[array[i], array[j]] = [array[j], array[i]];
+
+}
+
+return array;
+
+}
+
+// 🔹 generar distribución final del tablero
+function generateTileTypes(tileCount){
+
+let pool = createTilePool();
+
+// 🔥 mezclar
+pool = shuffle(pool);
+
+// 🔥 ajustar tamaño al tablero
+const result = [];
+
+for(let i = 0; i < tileCount; i++){
+result.push(pool[i % pool.length]);
+}
+
+// 🔥 asegurar payday estratégicos
+result[0] = "payday";
+result[Math.floor(tileCount/2)] = "payday";
+
+return result;
 
 }
 
@@ -316,14 +356,15 @@ return group;
 const tileCount = 24;
 const radius = 6.2;
 
+
 const tiles=[];
-const tileTypes=[];
+const tileTypes = generateTileTypes(tileCount);
 
 for(let i=0;i<tileCount;i++){
 
 const angle = i/tileCount*Math.PI*2;
 
-const type = randomTileType();
+const type = tileTypes[i];
 
 const tile = createTrapezoid(type);
 
