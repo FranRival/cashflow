@@ -265,24 +265,49 @@ return array;
 function generateTileTypes(tileCount){
 
 let pool = createTilePool();
-
-// 🔥 mezclar
 pool = shuffle(pool);
 
-// 🔥 ajustar tamaño al tablero
 const result = [];
 
+// 🔥 evitar repeticiones consecutivas
+for(let i = 0; i < pool.length; i++){
+
+let current = pool[i];
+let attempts = 0;
+
+// si repite con la anterior, buscar otra
+while(
+result.length > 0 &&
+result[result.length - 1] === current &&
+attempts < 10
+){
+shuffle(pool);
+current = pool[i];
+attempts++;
+}
+
+result.push(current);
+
+}
+
+// 🔥 ajustar al tamaño del tablero
+const final = [];
+
 for(let i = 0; i < tileCount; i++){
-result.push(pool[i % pool.length]);
+final.push(result[i % result.length]);
 }
 
-// 🔥 asegurar payday estratégicos
-result[0] = "payday";
-result[Math.floor(tileCount/2)] = "payday";
+// 🔥 payday estratégicos
+final[0] = "payday";
+final[Math.floor(tileCount/2)] = "payday";
 
-return result;
+return final;
 
-}
+}   
+
+
+
+
 
 /* TRAPECIO */
 
