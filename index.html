@@ -1467,6 +1467,7 @@ return;
 }
 
 /* SMALL DEAL */
+
 if(type === "smallDeal"){
 
 const deal = fastTrack[currentPlayer]
@@ -1479,15 +1480,41 @@ if(marketState === "crash") priceMultiplier = 0.6;
 
 const finalCost = Math.floor(deal.cost * priceMultiplier);
 
+// 🔥 IA (SIN UI)
+if(currentPlayer === 1){
+
+if(aiDecision(currentPlayer, deal)){
+
+if(money[currentPlayer] >= finalCost){
+money[currentPlayer] -= finalCost;
+}else{
+takeLoan(currentPlayer, finalCost - money[currentPlayer]);
+money[currentPlayer] -= finalCost;
+}
+
+income[currentPlayer].realEstate += deal.cashflow;
+
+assets[currentPlayer].realEstate.push({
+name: deal.title,
+cashflow: deal.cashflow,
+cost: finalCost
+});
+
+showCard("IA COMPRA", deal.title);
+
+}else{
+
+showCard("IA PASA", deal.title);
+
+}
+
+return;
+}
+
+// 🔥 HUMANO (CON UI)
 const yesIndex = decisionActions.length;
 
 decisionActions.push(function(){
-
-if(currentPlayer === 1){
-if(!aiDecision(currentPlayer, deal)){
-return;
-}
-}
 
 if(money[currentPlayer] >= finalCost){
 money[currentPlayer] -= finalCost;
@@ -1525,6 +1552,12 @@ noIndex
 
 return;
 }
+
+
+
+
+
+
 
 /* DOWNSIZED */
 if(type === "downsized"){
