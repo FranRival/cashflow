@@ -110,7 +110,7 @@ box-shadow:0 0 20px rgba(0,0,0,0.5);
 
 <br>
 
-<button onclick="closeCard()">OK</button>
+<button id="okButton" onclick="closeCard()">OK</button>
 
 </div>
 
@@ -957,19 +957,30 @@ waitingCard = true;
 //salir de la carrera de la rata
 function checkRatRaceExit(player){
 
-const cashflow = getCashflow(player);
+const passive = getPassiveIncome(player);
 
-if(!fastTrack[player] && cashflow > 0){
+const totalExpenses =
+expenses[player].tax +
+expenses[player].mortgage +
+expenses[player].schoolLoan +
+expenses[player].carLoan +
+expenses[player].creditCard +
+expenses[player].retail +
+expenses[player].other +
+expenses[player].children;
+
+// 🔥 condición correcta estilo Cashflow real
+if(!fastTrack[player] && passive >= totalExpenses){
 
 fastTrack[player] = true;
 
-activateFastTrackVisual()
+activateFastTrackVisual();
 
 showCard(
 "FAST TRACK",
 `
 ¡Has salido de la carrera de la rata! 🚀<br><br>
-Tu flujo de caja es positivo.<br>
+Tus ingresos pasivos cubren tus gastos.<br>
 Ahora juegas en modo inversión rápida.
 `
 );
@@ -977,6 +988,9 @@ Ahora juegas en modo inversión rápida.
 }
 
 }
+
+
+
 
 
 /* UI */
@@ -1216,6 +1230,9 @@ cardBody.innerHTML = body;
 // 🔥 limpiar botones SIEMPRE
 cardButtons.innerHTML = "";
 
+// ✅ mostrar OK
+document.getElementById("okButton").style.display = "block";
+
 card.style.display = "block";
 
 // 🔥 IA autocierra sin romper flujo
@@ -1246,6 +1263,9 @@ cardButtons.innerHTML = `
 <button onclick="executeDecision(${yesIndex})">Aceptar</button>
 <button onclick="executeDecision(${noIndex})">Rechazar</button>
 `;
+
+// ❌ ocultar OK
+document.getElementById("okButton").style.display = "none";
 
 card.style.display = "block";
 
