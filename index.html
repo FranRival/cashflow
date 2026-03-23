@@ -110,7 +110,6 @@ box-shadow:0 0 20px rgba(0,0,0,0.5);
 
 <br>
 
-<button id="okButton" onclick="closeCard()">OK</button>
 
 </div>
 
@@ -1214,35 +1213,44 @@ el.style.color = "white";
 
 
 /* CARTAS */
+function showCard(title, body){
 
-function showCard(title,body){
-
-// 🔥 evita stacking de cartas
-if(waitingCard){
-return;
-}
+if(waitingCard) return;
 
 waitingCard = true;
 
 cardTitle.innerText = title;
 cardBody.innerHTML = body;
 
-// 🔥 limpiar botones SIEMPRE
 cardButtons.innerHTML = "";
 
-// ✅ mostrar OK
-document.getElementById("okButton").style.display = "block";
+// 🔥 IA → NO mostrar botón nunca
+if(currentPlayer === 1){
 
 card.style.display = "block";
 
-// 🔥 IA autocierra sin romper flujo
-if(currentPlayer === 1){
+// cerrar automático SIN botón visible
 setTimeout(()=>{
 closeCard();
 },1200);
-}
+
+return;
 
 }
+
+// 👇 HUMANO → sí mostrar botón
+cardButtons.innerHTML = `
+<button onclick="closeCard()">OK</button>
+`;
+
+card.style.display = "block";
+
+}
+
+
+
+
+
 
 
 
@@ -1265,7 +1273,6 @@ cardButtons.innerHTML = `
 `;
 
 // ❌ ocultar OK
-document.getElementById("okButton").style.display = "none";
 
 card.style.display = "block";
 
