@@ -185,6 +185,10 @@ let turnState = "idle";
 
 let diceResult = 0;
 
+const TURN_DELAY = 800;      // entre turnos
+const MOVE_DELAY = 300;      // antes de resolver casilla
+const AI_DELAY = 900;        // IA "piensa"
+
 //turno de quien es. trajeta en la esquina superior izqueirda
 //tarjetas, aceptar trato o declinar (compra de activos)
 //flujo le hace falta dinero ahorrado.
@@ -357,7 +361,7 @@ function startTurn(player){
 
     setTimeout(()=>{
         rollDiceInternal(player);
-    }, 800);
+    }, AI_DELAY);
 
 }
 
@@ -1920,7 +1924,9 @@ function rollDiceInternal(player){
    updateDiceHeader(result);
     showDiceResult(result);
 
-    movePlayer(result);
+    setTimeout(()=>{
+        movePlayer(result);
+    }, MOVE_DELAY);
 
 }
 
@@ -2001,7 +2007,7 @@ function endTurn(){
 
         startTurn(currentPlayer);
 
-    }, 500);
+    }, TURN_DELAY);
 
 }
 
@@ -2019,46 +2025,37 @@ function stepMove(){
 
 
     
-if(step>=steps){
+if(step >= steps){
+
     turnState = "resolving";
 
-resolveTile(positions[currentPlayer]);
+    setTimeout(()=>{
 
-if(!waitingCard){
-    endTurn();
-}
+        resolveTile(positions[currentPlayer]);
 
-// 🔥 NUEVO: economía por turno
-processTurnEconomy(currentPlayer);
+        processTurnEconomy(currentPlayer);
 
-// eventos globales
-if(macroState === "normal" && Math.random() < 0.15){
-    triggerMacroEvent();
-}
+        if(macroState === "normal" && Math.random() < 0.15){
+            triggerMacroEvent();
+        }
 
-// efectos sistema
-applyMacroEffects(currentPlayer);
-updateMacro();
-updateStockPrices();
+        applyMacroEffects(currentPlayer);
+        updateMacro();
+        updateStockPrices();
+        applyBankPressure(currentPlayer);
+        aiManageDebt(currentPlayer);
+        checkBankruptcy(currentPlayer);
 
-// banco
-applyBankPressure(currentPlayer);
+        updateUI();
+        checkVictory(currentPlayer);
 
-// IA gestiona deuda
-aiManageDebt(currentPlayer);
+        if(!waitingCard){
+            endTurn();
+        }
 
-// quiebra
-checkBankruptcy(currentPlayer);
+    }, MOVE_DELAY);
 
-// UI
-updateUI();
-
-// victoria
-checkVictory(currentPlayer);
-
-endTurn()
-return;
-
+    return;
 }
 
 step++;
