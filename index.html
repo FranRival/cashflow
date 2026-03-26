@@ -1376,26 +1376,40 @@ card.style.display = "block";
 
 function showDecision(title, body, yesIndex, noIndex){
 
-// 🔥 evita que se acumulen decisiones anteriores
-decisionActions = decisionActions || [];
+    // 👉 SI ES IA → NO mostrar botones
+    if(currentPlayer === 1){
 
-waitingCard = true;
+        setTimeout(()=>{
 
-cardTitle.innerText = title;
-cardBody.innerHTML = body;
+            if(decisionActions[yesIndex]){
+                decisionActions[yesIndex](); // IA ejecuta decisión
+            }
 
-// 🔥 limpiar botones antes de renderizar
-cardButtons.innerHTML = "";
+            decisionActions = [];
 
-cardButtons.innerHTML = `
-<button onclick="executeDecision(${yesIndex})">Aceptar</button>
-<button onclick="executeDecision(${noIndex})">Rechazar</button>
-`;
+            updateUI();
 
-// ❌ ocultar OK
+            if(!waitingCard){
+                endTurn();
+            }
 
-card.style.display = "block";
+        }, AI_DELAY);
 
+        return;
+    }
+
+    // 👉 SOLO HUMANO VE UI
+    waitingCard = true;
+
+    cardTitle.innerText = title;
+    cardBody.innerHTML = body;
+
+    cardButtons.innerHTML = `
+        <button onclick="executeDecision(${yesIndex})">Aceptar</button>
+        <button onclick="executeDecision(${noIndex})">Rechazar</button>
+    `;
+
+    card.style.display = "block";
 }
 
 
