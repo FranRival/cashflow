@@ -180,6 +180,11 @@ const status1 = document.getElementById("status1");
 const networth1 = document.getElementById("networth1");
 const assets1 = document.getElementById("assets1");
 
+let turnState = "idle"; 
+// idle | rolling | moving | resolving | end
+
+let diceResult = 0;
+
 //turno de quien es. trajeta en la esquina superior izqueirda
 //tarjetas, aceptar trato o declinar (compra de activos)
 //flujo le hace falta dinero ahorrado.
@@ -337,16 +342,38 @@ return final;
 
 
 
+function startTurn(player){
+
+    if(waitingCard) return;
+
+    turnState = "rolling";
+
+    document.getElementById("turnInfo").innerText =
+    "Turno: " + (player === 0 ? "Jugador 1" : "IA");
+
+    if(player === 0){
+        return;
+    }
+
+    setTimeout(()=>{
+        rollDiceInternal(player);
+    }, 800);
+
+}
+
+
+
 /* */
 function processTurnEconomy(player){
 
     const cashflow = getCashflow(player);
 
-    money[player] += cashflow;
+    if(cashflow !== 0){
+        money[player] += cashflow;
 
-    // feedback visual jugador humano
-    if(player === 0){
-        animateValueChange("money1", cashflow);
+        if(player === 0){
+            animateValueChange("money1", cashflow);
+        }
     }
 
 }
@@ -425,26 +452,24 @@ const tileCount = 24;
 const radius = 6.2;
 
 
-const tiles=[];
+const tiles = [];
 const tileTypes = generateTileTypes(tileCount);
 
-for(let i=0;i<tileCount;i++){
+for(let i = 0; i < tileCount; i++){
 
-const angle = i/tileCount*Math.PI*2;
+    const angle = i / tileCount * Math.PI * 2;
 
-const type = tileTypes[i];
+    const type = tileTypes[i];
 
-const tile = createTrapezoid(type);
+    const tile = createTrapezoid(type);
 
-tile.position.x = Math.cos(angle)*radius;
-tile.position.z = Math.sin(angle)*radius;
+    tile.position.x = Math.cos(angle) * radius;
+    tile.position.z = Math.sin(angle) * radius;
 
-tile.rotation.y = -angle + Math.PI/2;
+    tile.rotation.y = -angle + Math.PI / 2;
 
-scene.add(tile);
-
-tiles.push(tile);
-tileTypes.push(type);
+    scene.add(tile);
+    tiles.push(tile);
 
 }
 
@@ -1374,51 +1399,43 @@ card.style.display = "block";
 
 let decisionActions = [];
 
+
 function executeDecision(index){
 
-// 🔥 prevenir doble ejecución
-if(waitingCard === false) return;
+    if(!waitingCard) return;
 
-waitingCard = false;
+    waitingCard = false;
 
-// 🔥 ejecutar acción segura
-if(decisionActions[index]){
-decisionActions[index]();
-}
+    if(decisionActions[index]){
+        decisionActions[index]();
+    }
 
-// 🔥 limpiar completamente estado
-decisionActions = [];
+    decisionActions = [];
 
-// 🔥 limpiar UI
-cardButtons.innerHTML = "";
-card.style.display = "none";
+    cardButtons.innerHTML = "";
+    card.style.display = "none";
 
-// 🔥 asegurar actualización visual
-updateUI();
+    updateUI();
 
-// 🔥 cambiar turno correctamente
-switchTurn();
+    // 🔥 turno sigue flujo normal
+    endTurn();
 
 }
 
 
 function closeCard(){
 
-// 🔥 evitar doble cierre
-if(!waitingCard) return;
+    if(!waitingCard) return;
 
-// 🔥 cerrar UI primero
-card.style.display = "none";
-cardButtons.innerHTML = "";
+    card.style.display = "none";
+    cardButtons.innerHTML = "";
 
-// 🔥 liberar estado
-waitingCard = false;
+    waitingCard = false;
 
-// 🔥 asegurar actualización
-updateUI();
+    updateUI();
 
-// 🔥 pasar turno
-switchTurn();
+    // 🔥 ahora SIEMPRE termina turno correctamente
+    endTurn();
 
 }
 
@@ -1857,48 +1874,55 @@ let currentPlayer=0;
 
 function rollDice(){
 
-if(currentPlayer!==0 || waitingCard) return;
+    if(currentPlayer !== 0) return;
+    if(waitingCard) return;
+    if(turnState !== "rolling") return;
 
-let result;
-
-if(charityTurns[currentPlayer] > 0){
-
-const dice1 = Math.floor(Math.random()*6)+1;
-const dice2 = Math.floor(Math.random()*6)+1;
-
-result = dice1 + dice2;
-updateDiceHeader(dice1 + "+" + dice2);
-
-charityTurns[currentPlayer]--;
-
-showCard(
-"DOUBLE DICE",
-`
-Caridad activa<br>
-Dados: ${dice1} + ${dice2} = ${result}<br>
-Turnos restantes: ${charityTurns[currentPlayer]}
-`
-);
-
-}else{
-
-if(fastTrack[currentPlayer]){
-
-result = Math.floor(Math.random()*6)+1 + 2;
-
-}else{
-
-result = Math.floor(Math.random()*6)+1;
-updateDiceHeader(result);
-}
-
-}
-
-movePlayer(result);
+    rollDiceInternal(0);
 
 }
 
 
+
+
+function rollDiceInternal(player){
+
+    turnState = "moving";
+
+    let result;
+
+    if(charityTurns[player] > 0){
+
+        const d1 = Math.floor(Math.random()*6)+1;
+        const d2 = Math.floor(Math.random()*6)+1;
+
+        result = d1 + d2;
+        charityTurns[player]--;
+
+        showCard(
+        "DOUBLE DICE",
+        `Dados: ${d1} + ${d2} = ${result}`
+        );
+
+    }else{
+
+        if(fastTrack[player]){
+            result = Math.floor(Math.random()*6)+1 + 2;
+        }else{
+            result = Math.floor(Math.random()*6)+1;
+        }
+
+    }
+
+    diceResult = result;
+
+   // updateDiceUI(result); // 🔥 usa tu header
+   updateDiceHeader(result);
+    showDiceResult(result);
+
+    movePlayer(result);
+
+}
 
 
 
@@ -1952,74 +1976,36 @@ return roi >= threshold;
 
 
 
-function aiTurn(){
 
-if(waitingCard) return;
 
-setTimeout(()=>{
 
-if(waitingCard) return;
 
-let result;
 
-if(charityTurns[currentPlayer] > 0){
 
-const dice1 = Math.floor(Math.random()*6)+1;
-const dice2 = Math.floor(Math.random()*6)+1;
 
-result = dice1 + dice2;
-updateDiceHeader(dice1 + "+" + dice2);
 
-charityTurns[currentPlayer]--;
+function endTurn(){
 
-}else{
+    if(waitingCard) return;
 
-if(fastTrack[currentPlayer]){
-result = Math.floor(Math.random()*6)+1 + 2;
-}else{
-result = Math.floor(Math.random()*6)+1;
-updateDiceHeader(result);
-}
+    turnState = "end";
 
-}
+    setTimeout(()=>{
 
-if(currentPlayer === 1){
-movePlayer(result);
-}
+        currentPlayer = currentPlayer === 0 ? 1 : 0;
 
-},800);
+        document.getElementById("turnInfo").innerText =
+        "Turno: " + (currentPlayer === 0 ? "Jugador 1" : "IA");
+
+        turnState = "idle";
+
+        startTurn(currentPlayer);
+
+    }, 500);
 
 }
 
 
-
-
-
-
-
-
-function switchTurn(){
-
-if(waitingCard) return;
-
-currentPlayer = currentPlayer === 0 ? 1 : 0;
-
-document.getElementById("turnInfo").innerText =
-"Turno: " + (currentPlayer === 0 ? "Jugador 1" : "IA");
-
-if(currentPlayer === 1){
-
-setTimeout(()=>{
-
-if(!waitingCard && currentPlayer === 1){
-aiTurn();
-}
-
-},500);
-
-}
-
-}
 
 
 
@@ -2031,9 +2017,16 @@ let step=0;
 
 function stepMove(){
 
+
+    
 if(step>=steps){
+    turnState = "resolving";
 
 resolveTile(positions[currentPlayer]);
+
+if(!waitingCard){
+    endTurn();
+}
 
 // 🔥 NUEVO: economía por turno
 processTurnEconomy(currentPlayer);
@@ -2063,6 +2056,7 @@ updateUI();
 // victoria
 checkVictory(currentPlayer);
 
+endTurn()
 return;
 
 }
@@ -2131,6 +2125,8 @@ player2.position.z=tile.position.z;
 placePlayers();
 updateTileHighlights();
 updateUI();
+
+startTurn(currentPlayer);
 
 /* LOOP */
 
