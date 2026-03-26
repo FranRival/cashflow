@@ -337,6 +337,21 @@ return final;
 
 
 
+/* */
+function processTurnEconomy(player){
+
+    const cashflow = getCashflow(player);
+
+    money[player] += cashflow;
+
+    // feedback visual jugador humano
+    if(player === 0){
+        animateValueChange("money1", cashflow);
+    }
+
+}
+
+
 /* TRAPECIO */
 
 function createTrapezoid(type){
@@ -638,6 +653,16 @@ showCard(
 }
 
 
+
+
+
+function applyPassiveIncome(player){
+
+    const passive = getPassiveIncome(player);
+
+    money[player] += passive;
+
+}
 
 
 
@@ -1424,46 +1449,41 @@ const type = tileTypes[index];
 /* PAYDAY */
 if(type === "payday"){
 
-if(downsizedTurns[currentPlayer] > 0){
+    if(downsizedTurns[currentPlayer] > 0){
 
-downsizedTurns[currentPlayer]--;
+        downsizedTurns[currentPlayer]--;
 
-showCard(
-"DESEMPLEADO",
-`Sigues desempleado.<br>
-Turnos restantes: ${downsizedTurns[currentPlayer]}`
-);
+        showCard(
+        "DESEMPLEADO",
+        `Sigues desempleado.<br>
+        Turnos restantes: ${downsizedTurns[currentPlayer]}`
+        );
 
-return;
-}
+        return;
+    }
 
-const interestPayment = loans[currentPlayer] * bankInterestRate;
-const salary = income[currentPlayer].salary;
+    const interestPayment = loans[currentPlayer] * bankInterestRate;
 
-let dividendIncome = 0;
+    let dividendIncome = 0;
 
-assets[currentPlayer].stocks.forEach(s=>{
-const stock = stockCards.find(st=>st.name === s.name);
-if(stock){
-dividendIncome += s.shares * stock.dividend;
-}
-});
+    assets[currentPlayer].stocks.forEach(s=>{
+        const stock = stockCards.find(st=>st.name === s.name);
+        if(stock){
+            dividendIncome += s.shares * stock.dividend;
+        }
+    });
 
-money[currentPlayer] += salary + dividendIncome;
-income[currentPlayer].dividends = dividendIncome;
+    income[currentPlayer].dividends = dividendIncome;
 
-money[currentPlayer] -= interestPayment;
+    // 🔥 SOLO MENSAJE, NO SUMA DINERO
+    showCard(
+    "PAYDAY",
+    `Ingresos aplicados automáticamente.<br>
+    Dividendos actuales: $${dividendIncome}<br>
+    Intereses banco: $${interestPayment}`
+    );
 
-checkRatRaceExit(currentPlayer);
-
-showCard(
-"PAYDAY",
-`Salario: $${salary}<br>
-Dividendos: $${dividendIncome}<br>
-Intereses banco: $${interestPayment}`
-);
-
-return;
+    return;
 }
 
 /* SMALL DEAL */
@@ -2015,21 +2035,35 @@ if(step>=steps){
 
 resolveTile(positions[currentPlayer]);
 
+// 🔥 NUEVO: economía por turno
+processTurnEconomy(currentPlayer);
+
+// eventos globales
 if(macroState === "normal" && Math.random() < 0.15){
-triggerMacroEvent();
+    triggerMacroEvent();
 }
 
+// efectos sistema
 applyMacroEffects(currentPlayer);
 updateMacro();
 updateStockPrices();
+
+// banco
 applyBankPressure(currentPlayer);
+
+// IA gestiona deuda
 aiManageDebt(currentPlayer);
+
+// quiebra
 checkBankruptcy(currentPlayer);
 
+// UI
 updateUI();
+
+// victoria
 checkVictory(currentPlayer);
 
-return; // 🔥 FIX CRÍTICO
+return;
 
 }
 
@@ -2119,3 +2153,28 @@ animate();
 </body>
 
 </html>
+
+
+
+
+pierdes empleo - pierdes turnos
+das charity - ganas 2 turnos seguidos
+
+
+pedir prestamo? - si tenemos los recursos, bien, sino, pedimos prestamo al banco
+
+
+si vendes algo, anuncio de cuanto dinero tienes...
+
+deudas, en color rojo 
+
+perder activos en verdad 
+
+como saber si me alcanza el dinero? o no.. 
+
+
+fast track no funciona. su logica es incorrecta. 
+
+
+
+me quedo sin dinero, al siguiente turno, ya tengo mas?
