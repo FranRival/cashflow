@@ -368,7 +368,18 @@ return final;
 }   
 
 
+function notifyLoan(amount){
 
+    showCard(
+    "🏦 PRÉSTAMO AUTOMÁTICO",
+    `
+    No tienes suficiente dinero.<br><br>
+    El banco te ha prestado:<br>
+    <b>$${amount}</b>
+    `
+    );
+
+}
 
 
 function startTurn(player){
@@ -1566,10 +1577,19 @@ if(currentPlayer === 1){
 if(aiDecision(currentPlayer, deal)){
 
 if(money[currentPlayer] >= finalCost){
-money[currentPlayer] -= finalCost;
+
+    money[currentPlayer] -= finalCost;
+
 }else{
-takeLoan(currentPlayer, finalCost - money[currentPlayer]);
-money[currentPlayer] -= finalCost;
+
+    const loanNeeded = finalCost - money[currentPlayer];
+
+    notifyLoan(loanNeeded); // 🔥 aviso visual
+
+    takeLoan(currentPlayer, loanNeeded);
+
+    money[currentPlayer] -= finalCost;
+
 }
 
 income[currentPlayer].realEstate += deal.cashflow;
@@ -1597,10 +1617,19 @@ const yesIndex = decisionActions.length;
 decisionActions.push(function(){
 
 if(money[currentPlayer] >= finalCost){
-money[currentPlayer] -= finalCost;
+
+    money[currentPlayer] -= finalCost;
+
 }else{
-takeLoan(currentPlayer, finalCost - money[currentPlayer]);
-money[currentPlayer] -= finalCost;
+
+    const loanNeeded = finalCost - money[currentPlayer];
+
+    notifyLoan(loanNeeded); // 🔥 aviso visual
+
+    takeLoan(currentPlayer, loanNeeded);
+
+    money[currentPlayer] -= finalCost;
+
 }
 
 income[currentPlayer].realEstate += deal.cashflow;
@@ -1675,10 +1704,19 @@ return;
 }
 
 if(money[currentPlayer] >= finalCost){
-money[currentPlayer] -= finalCost;
+
+    money[currentPlayer] -= finalCost;
+
 }else{
-takeLoan(currentPlayer, finalCost - money[currentPlayer]);
-money[currentPlayer] -= finalCost;
+
+    const loanNeeded = finalCost - money[currentPlayer];
+
+    notifyLoan(loanNeeded); // 🔥 aviso visual
+
+    takeLoan(currentPlayer, loanNeeded);
+
+    money[currentPlayer] -= finalCost;
+
 }
 
 income[currentPlayer].business += deal.cashflow;
