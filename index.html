@@ -30,6 +30,25 @@ padding:10px;
 font-size:16px;
 }
 
+#assetsContainer{
+max-height:150px;
+overflow-y:auto;
+margin-top:5px;
+padding-right:5px;
+}
+
+/* scrollbar bonita opcional */
+#assetsContainer::-webkit-scrollbar{
+width:6px;
+}
+
+#assetsContainer::-webkit-scrollbar-thumb{
+background:#00ffcc;
+border-radius:4px;
+}
+
+
+
 </style>
 </head>
 
@@ -95,8 +114,8 @@ Patrimonio neto: $<span id="networth1"></span>
 <br><br>
 
 ACTIVOS<br>
-<div id="assets1"></div>
-
+<div id="assetsContainer">
+    <div id="assets1"></div>
 </div>
 
 
