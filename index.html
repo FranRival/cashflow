@@ -54,6 +54,23 @@ border-radius:4px;
 }
 
 
+#card{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:white;
+color:black;
+padding:20px;
+border-radius:10px;
+width:320px;
+display:none;
+box-shadow:0 0 20px rgba(0,0,0,0.5);
+
+z-index:9999; /* 🔥 CLAVE */
+}
+
+
 
 </style>
 </head>
@@ -124,6 +141,8 @@ ACTIVOS<br>
     <div id="assets1"></div>
 </div>
 
+</div>
+
 
 <div id="diceResult" style="
 position:absolute;
@@ -181,7 +200,7 @@ box-shadow:0 0 20px rgba(0,0,0,0.5);
 <br>
 
 
-</div>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
