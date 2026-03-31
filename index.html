@@ -1620,12 +1620,13 @@ if(money[currentPlayer] >= finalCost){
 
     const loanNeeded = finalCost - money[currentPlayer];
 
-    notifyLoan(loanNeeded); // 🔥 aviso visual
+    askForLoan(currentPlayer, loanNeeded, function(){
 
-    takeLoan(currentPlayer, loanNeeded);
+        money[currentPlayer] -= finalCost;
 
-    money[currentPlayer] -= finalCost;
+    });
 
+    return; // 🔥 IMPORTANTÍSIMO
 }
 
 income[currentPlayer].realEstate += deal.cashflow;
@@ -1660,12 +1661,13 @@ if(money[currentPlayer] >= finalCost){
 
     const loanNeeded = finalCost - money[currentPlayer];
 
-    notifyLoan(loanNeeded); // 🔥 aviso visual
+    askForLoan(currentPlayer, loanNeeded, function(){
 
-    takeLoan(currentPlayer, loanNeeded);
+        money[currentPlayer] -= finalCost;
 
-    money[currentPlayer] -= finalCost;
+    });
 
+    return; // 🔥 IMPORTANTÍSIMO
 }
 
 income[currentPlayer].realEstate += deal.cashflow;
