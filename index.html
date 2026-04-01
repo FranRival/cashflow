@@ -316,13 +316,24 @@ const AI_DELAY = 900;        // IA "piensa"
 const scene = new THREE.Scene();
 const loader = new THREE.TextureLoader();
 
-loader.load("assets/ChatGPT-Image-1-abr-2026-11_50_46.png", function(texture){
+loader.load(
+"assets/ChatGPT-Image-1-abr-2026-11_50_46.png",
 
-    texture.colorSpace = THREE.SRGBColorSpace; // 🔥 mejora colores
+function(texture){
+
+    // ✅ versión compatible con r128
+    texture.encoding = THREE.sRGBEncoding;
 
     scene.background = texture;
 
-});
+},
+
+undefined,
+
+function(err){
+    console.error("Error cargando fondo:", err);
+}
+);
 
 /* CAMARA */
 
