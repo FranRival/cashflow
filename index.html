@@ -314,7 +314,15 @@ const AI_DELAY = 900;        // IA "piensa"
 /* ESCENA */
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000000);
+const loader = new THREE.TextureLoader();
+
+loader.load("assets/ChatGPT-Image-1-abr-2026-11_50_46.png", function(texture){
+
+    texture.colorSpace = THREE.SRGBColorSpace; // 🔥 mejora colores
+
+    scene.background = texture;
+
+});
 
 /* CAMARA */
 
